@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment — TasteQR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="design.css" />
+  <style>
+    main {
+      max-width: 600px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    h2 { color: var(--brand); }
+    #order-items {
+      text-align: left;
+      margin: 20px auto;
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+    #back-home {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    #back-home:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <header id="banner">
+    <div class="banner-left">
+      <h2>Thank You!</h2>
+      <h4>Your Order Has Been Received</h4>
+    </div>
+  </header>
+
+  <main>
+    <h2>Order Summary</h2>
+    <div id="order-info">
+      <p>Order ID: <span id="order-id"></span></p>
+      <p>Table No: <span id="table-no"></span></p>
+      <div id="order-items"></div>
+      <h3>Total: ¥<span id="order-total">0</span></h3>
+    </div>
+
+    <p>✅ Please wait for your meal. You can view your order history anytime.</p>
+    <button id="back-home">Back to Menu</button>
+  </main>
+
+  <script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get("orderId");
+  const tableNo = params.get("table");
+
+  // Fill header info
+  document.getElementById("order-id").textContent = orderId || "-";
+  document.getElementById("table-no").textContent = tableNo || "-";
+
+  if (!orderId) return;
+
+  try {
+    const res = await fetch(`/api/order/${orderId}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.order) {
+      console.error("Invalid order response");
+      return;
+    }
+
+    const container = document.getElementById("order-items");
+
+    container.innerHTML = data.items
+      .map((item) => {
+        // --- Parse addons safely (array OR JSON string) ---
+        let addons = [];
+        if (Array.isArray(item.addons)) {
+          addons = item.addons;
+        } else if (typeof item.addons === "string" && item.addons.trim() !== "") {
+          try {
+            addons = JSON.parse(item.addons);
+          } catch (e) {
+            console.warn("Bad addons JSON:", item.addons);
+          }
+        }
+
+        // Build details list
+        const details = [
+          item.size ? `Size: ${item.size}` : "",
+          item.spice ? `Spice: ${item.spice}` : "",
+          addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : "",
+          item.juice ? `Juice: ${item.juice}` : "" 
+        ].filter(Boolean); // remove empty
+
+        const detailsHTML =
+          details.length > 0
+            ? `<small class="details">${details.join("<br>")}</small>`
+            : "";
+
+        const subtotal = Number(
+          item.subtotal != null ? item.subtotal : item.price * item.qty
+        );
+
+        return `
+          <div class="item">
+            <span>
+              ${item.name} × ${item.qty}<br>
+              ${detailsHTML}
+            </span>
+            <span>¥${subtotal.toFixed(2)}</span>
+          </div>
+        `;
+      })
+      .join("");
+
+    // Update total
+    document.getElementById("order-total").textContent =
+      Number(data.order.total).toFixed(2);
+  } catch (err) {
+    console.error("❌ Payment page load error:", err);
+  }
+
+  // Back to menu
+  document.getElementById("back-home").addEventListener("click", () => {
+    window.location.href = tableNo
+      ? `main.html?table=${tableNo}`
+      : "main.html";
+  });
+});
+</script>
+</body>
+</html>

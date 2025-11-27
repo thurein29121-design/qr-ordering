@@ -1,0 +1,120 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background: #f8f8f8;
+  margin: 0;
+  color: #861616;
+}
+
+/* Header */
+header {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+header h1 { margin: 0; font-size: 1.2rem; }
+#backBtn {
+  border: none;
+  background: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+/* Cart list */
+#cartList {
+  padding: 20px 16px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cart-item {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
+
+.cart-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #fdfdfd;
+  margin-right: 14px;
+}
+
+.cart-info {
+  flex: 1;
+}
+
+.cart-info h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.cart-info p {
+  margin: 0 0 6px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.qty-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f3f3;
+  padding: 4px 8px;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.qty-box button {
+  border: none;
+  background: linear-gradient(135deg, #21a18e, #8e5b3f);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Footer */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  padding: 14px 20px;
+}
+
+.order-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#checkoutBtn {
+  background: linear-gradient(135deg, #21a18e, #8e5b3f);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+#checkoutBtn:hover {
+  transform: translateY(-2px);
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Table Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="tables.css" />
+</head>
+
+<body>
+
+  <header class="top-bar">
+    <div class="title">⚡Rainbow ⚡</div>
+    <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+  </header>
+
+  <main id="table-grid"></main>
+
+  <!-- ACTION POPUP -->
+  <div id="popup-overlay" class="hidden">
+    <div id="popup">
+      <h2 id="popup-title">TABLE</h2>
+      <p class="popup-subtitle">Select Action</p>
+
+      <!-- OPEN (GREEN) -->
+      <button class="status-btn status-occupied" data-state="1">🔴 Sitting</button>
+
+      <!-- CLOSE & SHOW RECEIPT -->
+      <button class="status-btn status-checkout" id="checkoutBtn">🟢 Close & Show Receipt </button>
+
+      <button class="btn-cancel" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- RECEIPT POPUP -->
+  <div id="receipt-overlay" class="hidden">
+    <div id="receipt-popup">
+      <h2 class="receipt-title">🧾 Receipt</h2>
+      <pre id="receipt-text" class="receipt-box"></pre>
+      <button id="close-receipt" class="receipt-btn cancel">Close</button>
+    </div>
+  </div>
+
+  <script src="tables.js"></script>
+</body>
+</html>

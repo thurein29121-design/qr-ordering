@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TasteQR — Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="design.css" />
+</head>
+<body>
+  <div id="banner">
+    <h2>⚡Rainbow ⚡</h2>
+    <button id="callStaffButton"><span class="bell">🔔</span> Call Staff</button>
+    <button id="viewHistoryButton"><span class="receipt">🧾</span> View History</button>
+  </div>
+
+  <nav id="nav1">
+    <div class="nav-item" data-menu="Set">Set</div>
+    <div class="nav-item" data-menu="Side menu">Breakfast </div>
+    <div class="nav-item" data-menu="Dessert">Dessert</div>
+    <div class="nav-item" data-menu="Drink">Drink </div>
+    <div class="nav-item" data-menu="Alcohol">Others</div>
+  </nav>
+
+  <div id="content-container">
+    <div id="main-container"></div>
+  </div>
+
+
+  <footer >
+    <button id="openCartBtn" class="cart-float">🛒 <span id="cartCount">0</span></button>
+  </footer>
+
+<div id="customize-popup" class="popup">
+  <div class="popup-content">
+    <h3 id="item-name"></h3>
+
+    <div id="size-section"></div>
+    <div id="spice-section"></div>
+    <div id="addons-section"></div>
+    <div id="juice-section"></div>
+    <button id="confirm-add">Add to Cart</button>
+    <button id="close-popup">Cancel</button>
+  </div>
+</div>
+
+
+  <script src="script.js"></script>
+  
+
+</body>
+</html>

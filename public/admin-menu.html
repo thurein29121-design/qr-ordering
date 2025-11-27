@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TasteQR — Admin Menu Manager</title>
+  <link rel="stylesheet" href="design.css">
+  <style>
+    body { font-family: "Poppins", sans-serif; padding: 20px; background: var(--bg); }
+    h2 { color: var(--brand); text-align: center; }
+    #form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+    input, select { padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+    button { background: var(--brand); color: #fff; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 700; }
+    button:hover { opacity: 0.9; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    th, td { padding: 10px; text-align: center; border-bottom: 1px solid #ddd; }
+    th { background: var(--brand); color: #fff; }
+    img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; background:#f8f8f8; }
+    .action-btn { background: #f4d19a; color: #3b2b21; padding: 6px 10px; border-radius: 6px; cursor: pointer; border: none; }
+    .delete-btn { background: #d9534f; color: #fff; }
+    #preview { display:block; margin:0 auto 10px auto; border-radius:8px; width:100px; height:80px; object-fit:cover; background:#eee; }
+  </style>
+</head>
+<body>
+  <h2>🍛 TasteQR — Menu Management</h2>
+
+  <div id="form">
+    <input type="text" id="category" placeholder="Category (e.g. Set, Drink, Dessert)" required>
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="number" id="price" placeholder="Price (¥)" required>
+    <input type="text" id="image" placeholder="Image URL (e.g. /image/blackberry.webp)">
+    <img id="preview" src="/image/noimg.png" alt="Preview">
+    <button id="addBtn">➕ Add Item</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Image</th><th>Category</th><th>Name</th><th>Price</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="menuTable"></tbody>
+  </table>
+
+  <script>
+    const API = '/api/admin/menu';
+    const table = document.getElementById('menuTable');
+    const preview = document.getElementById('preview');
+    const imgInput = document.getElementById('image');
+
+    // ✅ Toast function
+    function showToast(message = "✅ Success!", color = "#333") {
+      const toast = document.getElementById("toast");
+      if (!toast) {
+        console.warn("⚠️ No toast element found!");
+        return;
+      }
+      toast.textContent = message;
+      toast.style.backgroundColor = color;
+      toast.style.visibility = "visible";
+      toast.style.opacity = "1";
+      toast.style.bottom = "50px";
+      toast.style.transition = "opacity 0.4s, bottom 0.4s";
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.bottom = "30px";
+        toast.style.visibility = "hidden";
+      }, 2000);
+    }
+
+    // 🔹 Live preview update when typing image path
+    imgInput.addEventListener('input', () => {
+      const path = imgInput.value.trim();
+      preview.src = path ? (path.startsWith('/') ? path : '/' + path) : '/image/noimg.png';
+    });
+
+    // 🔹 Load menu data from backend
+    async function loadMenu() {
+      const res = await fetch(API);
+      const data = await res.json();
+      table.innerHTML = data.map(i => `
+        <tr>
+          <td>${i.id}</td>
+          <td><img src="${i.image?.startsWith('/') ? i.image : '/' + (i.image || 'image/noimg.png')}" alt="${i.name}"></td>
+          <td contenteditable="true" data-field="category">${i.category}</td>
+          <td contenteditable="true" data-field="name">${i.name}</td>
+          <td contenteditable="true" data-field="price">${i.price}</td>
+          <td>
+            <button class="action-btn save-btn" data-id="${i.id}">💾 Save</button>
+            <button class="action-btn delete-btn" data-id="${i.id}">🗑️ Delete</button>
+          </td>
+        </tr>
+      `).join('');
+      attachEvents();
+    }
+
+    // ➕ Add new menu item
+    document.getElementById('addBtn').addEventListener('click', async () => {
+      const name = document.getElementById('name').value.trim();
+      const price = document.getElementById('price').value.trim();
+      const image = document.getElementById('image').value.trim();
+      const category = document.getElementById('category').value.trim();
+      if (!name || !price || !category) return alert('Please fill name, price, and category');
+
+      const fixedImage = image ? (image.startsWith('/') ? image : '/' + image) : null;
+
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, price, image: fixedImage, category })
+      });
+
+      showToast("➕ New item added!", "#6b4e3d");
+
+      // Clear form
+      document.getElementById('name').value = '';
+      document.getElementById('price').value = '';
+      document.getElementById('image').value = '';
+      document.getElementById('category').value = '';
+      preview.src = '/image/noimg.png';
+      loadMenu();
+    });
+
+    // ⚙️ Attach save/delete event listeners
+    function attachEvents() {
+      // 💾 Save button
+      document.querySelectorAll('.save-btn').forEach(btn => btn.addEventListener('click', async () => {
+        const row = btn.closest('tr');
+        const id = btn.dataset.id;
+        const name = row.querySelector('[data-field="name"]').textContent.trim();
+        const price = row.querySelector('[data-field="price"]').textContent.trim();
+        const category = row.querySelector('[data-field="category"]').textContent.trim();
+
+        const imgTag = row.querySelector('img');
+        let image = imgTag ? imgTag.getAttribute('src') : '';
+        if (image.startsWith(window.location.origin)) {
+          image = image.replace(window.location.origin, '');
+        }
+
+        await fetch(`${API}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, price, category, image })
+        });
+
+        showToast("✅ Menu item updated!", "#333");
+        loadMenu();
+      }));
+
+      // 🗑️ Delete button
+      document.querySelectorAll('.delete-btn').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this item?')) return;
+          try {
+            const res = await fetch(`${API}/${btn.dataset.id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete');
+            showToast("🗑️ Item deleted!", "#d9534f");
+            loadMenu();
+          } catch (err) {
+            console.error("❌ Delete failed:", err);
+            showToast("❌ Delete failed", "#a94442");
+          }
+        })
+      );
+    }
+
+    loadMenu();
+  </script>
+
+  <!-- ✅ Toast Notification Box -->
+  <div id="toast" style="
+    visibility:hidden;
+    min-width:250px;
+    margin-left:-125px;
+    background-color:#333;
+    color:#fff;
+    text-align:center;
+    border-radius:8px;
+    padding:14px;
+    position:fixed;
+    z-index:9999;
+    left:50%;
+    bottom:30px;
+    font-weight:600;
+    opacity:0;
+    transition:opacity 0.4s, bottom 0.4s;
+  ">Saved successfully!</div>
+
+</body>
+</html>

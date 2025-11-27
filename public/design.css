@@ -1,0 +1,513 @@
+:root {
+  --brand: #0ea5e9;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --bg: #f8fafc;
+  --card: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #f6f7fb;
+  color: var(--ink);
+}
+
+/* Banner */
+#banner {
+  position: relative;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: linear-gradient(90deg, #121b1f, #22d3ee);
+  color: #fff;
+}
+
+#banner h2 {
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+
+#banner h4 {
+  font-weight: 500;
+  opacity: .95;
+}
+
+/* Call Staff Button */
+#callStaffButton {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background-color: transparent;
+  color: #ffcc00;
+  font-weight: 700;
+  cursor: pointer;
+  border-color: #222;
+  transition: transform 0.2s;
+}
+
+#callStaffButton:hover {
+  transform: translateY(-1px);
+}
+
+.bell {
+  display: inline-block;
+  font-size: 20px;
+  margin-right: 6px;
+  animation: ring 1.5s infinite;
+  transform-origin: top center;
+  text-shadow: 0 0 5px #2abe22, 0 0 10px #46381d;
+}
+/* View History Button */
+#viewHistoryButton {
+  position: fixed;
+  right: 20px;
+  top: 70px; /* under call button */
+  padding: 8px 14px;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.25s;
+}
+
+/* Hover Glow */
+#viewHistoryButton:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee;
+}
+
+.receipt {
+  font-size: 18px;
+  animation: pop 1.2s infinite ease-in-out;
+}
+
+/* Little bounce animation */
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+
+/* Bell ringing animation */
+@keyframes ring {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-10deg); }
+  30% { transform: rotate(5deg); }
+  40% { transform: rotate(-5deg); }
+  50% { transform: rotate(3deg); }
+  60%, 100% { transform: rotate(0); }
+}
+
+/* Nav */
+#nav1 {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #26394c;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+  color: whitesmoke;
+  overflow-x: auto;
+  flex-direction: row;
+}
+#nav1::-webkit-scrollbar {
+  height: 6px;
+}
+.nav-item {
+  flex: 0 0 auto;
+  min-width: 120px;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #83875f;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+  
+}
+
+.nav-item:hover {
+  background: #751959;
+}
+
+/* Content */
+#content-container {
+  display: flex;
+  padding: 16px;
+  gap: 16px;
+  background:linear-gradient(135deg, #3f5350, #324ebe);
+}
+
+/*#main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+}*/
+#main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+/* Menu Items */
+
+@media (max-width: 600px) {
+
+.menu-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.menu-item {
+  background: #877979;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform .12s ease;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  transform: translateY(-2px);
+}
+
+.menu-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu-name {
+  font-weight: 700;
+}
+
+.menu-price {
+  color: #851717;
+  font-weight: 700;
+}
+
+.menu-pic img {
+  width: 50px;
+  height: 55px;
+  border-radius: 8px;
+  object-fit: cover;
+  
+}
+.menu-item.set-item .menu-pic img {
+  width: 100px;
+  height: 65px;
+  border-radius: 12px;
+}
+
+}
+footer{
+  background:linear-gradient(135deg, #3f5350, #324ebe);
+}
+
+/* Floating Cart Button */
+.cart-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #6b4e3d, #8e5b3f);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 1000;
+  transition: all 0.25s;
+  background: linear-gradient(135deg, #eff2f1, #1d9366);
+}
+
+.cart-float:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.cart-float span {
+  background: #1c1c1c;
+  color: #ffffff;
+  border-radius: 50%;
+  padding: 7px 7px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+
+/* === Popup background === */
+/* === Popup Background === */
+#customize-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(3px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.25s ease;
+  padding:20px;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === Popup Box === */
+.popup-content {
+  background: #ffffff;
+  width: 92%;
+  max-width: 420px;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  animation: popUp 0.25s ease;
+  max-height: 90vh;      /* ← IMPORTANT */
+  overflow-y: auto; 
+  
+}
+.popup-content {
+  -webkit-overflow-scrolling: touch;
+}
+
+
+/* Popup zoom animation */
+@keyframes popUp {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Title */
+.popup-content h3 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+/* Section title */
+.popup-content h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 15px 0 8px;
+  color: #333;
+}
+
+/* === Option Buttons (size/spice) === */
+.option-btn {
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  border: 2px solid #ccc;
+  background: #fafafa;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+  min-width: 100px;
+  text-align: center;
+  transition: 0.2s;
+}
+
+.option-btn:hover {
+  background: #f2f2f2;
+}
+
+.option-btn.active {
+  border-color: #0DBA4B;
+  background: #e7f9ee;
+  color: #0D8A39;
+  transform: scale(1.06);
+}
+
+/* === ADD-ON CARD (image + info) === */
+.addon-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.2s ease;
+  margin-bottom: 10px;
+}
+
+.addon-card img {
+  width: 55px;
+  height: 55px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.addon-card.active {
+  border-color: #0DBA4B;
+  background: #e7f9ee;
+}
+
+.addon-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.addon-info .name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+}
+
+.addon-info .price {
+  font-size: 14px;
+  color: #777;
+}
+
+/* === Bottom buttons === */
+#confirm-add, #close-popup {
+  width: 48%;
+  padding: 12px 0;
+  margin-top: 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+#confirm-add {
+  background: #0DBA4B;
+  color: white;
+}
+
+#confirm-add:hover {
+  background: #0a9a3f;
+}
+
+#close-popup {
+  background: #ccc;
+}
+
+#close-popup:hover {
+  background: #b5b5b5;
+}
+
+#confirm-add {
+  background: #333;
+  color: white;
+}
+
+#close-popup {
+  background: #aaa;
+}
+
+/* Add-on item card */
+.addon-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f6f6f6;
+  border-radius: 10px;
+  padding: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.addon-card img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.addon-card.active {
+  border-color: #4CAF50;
+  background: #e8f9e8;
+}
+
+.addon-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.addon-info .name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.addon-info .price {
+  font-size: 14px;
+  color: #444;
+}
+
+.juice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.juice-card {
+  background: #fff;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.juice-card img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.juice-card.active {
+  border-color: #4CAF50;
+  background: #eafbea;
+  transform: scale(1.03);
+}

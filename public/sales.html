@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TasteQR Sales Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="design.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, sans-serif;
+      background: #3e4151;
+      color: #f9fafb;
+    }
+    h1 {
+      text-align: center;
+      color: #f97316;
+      background: linear-gradient(90deg, #121b1f, #22d3ee);
+      border-radius: 10px;
+      box-shadow: #22d3ee;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #9ca3af;
+      margin-bottom: 30px;
+    }
+    .cards {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-bottom: 30px;
+    }
+    .card {
+      background: #111827;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      border: 1px solid #1f2933;
+    }
+    .card-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .card-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .card-sub {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 20px 0 10px;
+      border-left: 4px solid #f97316;
+      padding-left: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #020617;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #111827;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background: #111827;
+      color: #e5e7eb;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+    tr:nth-child(even) td {
+      background: #020617;
+    }
+    tr:nth-child(odd) td {
+      background: #020617;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📈  ⚡Rainbow ⚡</h1>
+  <div class="subtitle">Live overview from receipts table (today / weekday vs weekend / top items)</div>
+
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-title">Today's Sales</div>
+      <div class="card-value" id="today-sales">¥0</div>
+      <div class="card-sub" id="today-sessions">0 sessions, 0 items</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weekday Avg</div>
+      <div class="card-value" id="weekday-avg">¥0</div>
+      <div class="card-sub" id="weekday-total">Total: ¥0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weekend Avg</div>
+      <div class="card-value" id="weekend-avg">¥0</div>
+      <div class="card-sub" id="weekend-total">Total: ¥0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weekend Boost</div>
+      <div class="card-value" id="weekend-boost">0%</div>
+      <div class="card-sub">Weekend vs Weekday</div>
+    </div>
+  </div>
+
+  <!-- Top items today -->
+  <div class="section-title">🔥 Top Items Today</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Revenue (¥)</th>
+      </tr>
+    </thead>
+    <tbody id="top-items-body">
+      <tr><td colspan="3">Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <script src="sales.js"></script>
+</body>
+</html>

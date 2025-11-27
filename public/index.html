@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rainbow Intro</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", Arial, sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    .bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -2;
+    }
+
+    #callStaffButton{
+  position:fixed; right:20px; top:20px; padding:8px 12px; border:5px; border-radius:10px;
+  background-color:transparent; color:#ffcc00; font-weight:700; cursor:pointer;
+  border-color: #222;
+    }
+    #callStaffButton:hover{transform:translateY(-1px);}
+
+    .bell {
+  display: inline-block;
+  font-size: 20px;          /* controls emoji size */
+  margin-right: 6px;        /* small gap from text */
+  animation: ring 1.5s infinite;
+  transform-origin: top center;
+}
+
+/* bell ringing animation */
+@keyframes ring {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-10deg); }
+  30% { transform: rotate(5deg); }
+  40% { transform: rotate(-5deg); }
+  50% { transform: rotate(3deg); }
+  60%, 100% { transform: rotate(0); }
+}
+.bell {
+  text-shadow: 0 0 5px #2abe22, 0 0 10px #46381d;
+}
+
+    .logo {
+      position: fixed;
+      top: 20px;
+      left: 30px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.8rem;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+      letter-spacing: 1px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .logo span {
+      color: #ffcc00;
+      text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+    }
+
+    /* 🔹 Login Section */
+    .login-container {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 40px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px rgba(0,0,0,0.4);
+      color: #fff;
+      transition: transform 0.3s ease;
+    }
+
+    .login-box:hover {
+      transform: translateY(-5px);
+    }
+
+    .login-box h2 {
+      font-size: 1.6rem;
+      margin-bottom: 25px;
+      font-weight: 600;
+      color: #3990a8;
+    }
+
+    /* 🔹 Form Fields */
+    .login-box input {
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    .login-box input:focus {
+      box-shadow: 0 0 10px #ffcc00;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      background: linear-gradient(90deg, #ffe066, #317a8a);
+      border: none;
+      border-radius: 8px;
+      color: #222;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .login-box button:hover {
+      background: linear-gradient(90deg, #ffe066, #317a8a);
+      transform: scale(1.03);
+    }
+
+    .login-box p {
+      color: #ff9b9b;
+      font-size: 0.9rem;
+      margin-top: 15px;
+    }
+
+    .cust-type {
+      text-align: left;
+      margin: 10px 0;
+      color: #fff;
+      font-weight: 500;
+    }
+    .cust-type label {
+      display: block;
+      margin: 5px 0;
+    }
+
+
+
+    /* 🔹 Mobile Adjustments */
+    @media (max-width: 768px) {
+      .logo {
+        font-size: 1.4rem;
+        top: 15px;
+        left: 20px;
+      }
+
+      .login-box {
+        padding: 25px;
+        width: 85%;
+      }
+
+      .login-box h2 {
+        font-size: 1.3rem;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- 🔹 Background Video -->
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="image/raining_background.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  
+
+  <!-- 🔹 Logo -->
+  <div class="logo">
+    ⚡<span>Rainbow</span>⚡
+    
+  </div>
+  
+    <button id="callStaffButton"><span class="bell">🔔</span> Call Staff</button>
+ 
+
+
+  <!-- 🔹 Login Form -->
+  <div class="login-container">
+    <div class="login-box">
+      <h2>Warmly Welcome to <i><b>Rainbow</b></i></h2>
+      <form id="tableForm">
+  <input type="number" id="tableInput" placeholder="Table Number" required>
+
+  <button type="submit">Start to Order➡</button>
+
+  <!--<button type="submit">Continue</button>-->
+  <p>⚠️ If you need any assistance, please do not hesitate to ask a member of staff.</p>
+      </form>
+    </div>
+  </div>
+
+  
+  <script>
+document.getElementById("tableForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const tableNo = document.getElementById("tableInput").value.trim();
+
+  if (!tableNo) return alert("⚠️ Please enter your table number.");
+
+  try {
+    // 🔹 Reset & activate this table
+    await fetch(`/api/tables/${tableNo}/toggle`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: 1 })
+    });
+
+    // 🔹 Clear any previous cart or history data
+    localStorage.removeItem("cart");
+    localStorage.setItem("tasteqr_table", tableNo);
+    localStorage.setItem("tasteqr_session", Date.now().toString());
+
+
+    // ✅ Go to the main menu
+    window.location.href = "main.html";
+  } catch (err) {
+    console.error("❌ Error activating table:", err);
+    alert("Server error. Please try again.");
+  }
+});
+// =============================
+// GLOBAL: Call Staff Button (NO SOUND)
+// =============================
+document.addEventListener("DOMContentLoaded", () => {
+
+  const callBtn = document.getElementById("callStaffButton");
+  if (!callBtn) return; // If page doesn't have the button
+
+  // Create floating notification
+  const notice = document.createElement("div");
+  notice.id = "staffNotice";
+  notice.style.cssText = `
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    background: #4CAF50;
+    color: white;
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.4s ease, bottom 0.4s ease;
+    z-index: 9999;
+  `;
+  document.body.appendChild(notice);
+
+  callBtn.addEventListener("click", () => {
+    try {
+      // Button animation
+      callBtn.disabled = true;
+      callBtn.textContent = "🚶‍♂️ Staff Coming...";
+
+      // Show confirmation message instantly
+      showStaffNotice("✅ Staff has been notified!");
+
+      // Reset after 3 seconds
+      setTimeout(() => {
+        callBtn.disabled = false;
+        callBtn.textContent = "🔔 Call Staff";
+      }, 3000);
+
+    } catch (err) {
+      console.error("Call staff error:", err);
+    }
+  });
+
+  // Floating notification animation
+  function showStaffNotice(msg) {
+    notice.textContent = msg;
+    notice.style.opacity = "1";
+    notice.style.bottom = "80px";
+
+    setTimeout(() => {
+      notice.style.opacity = "0";
+      notice.style.bottom = "60px";
+    }, 2000);
+  }
+
+});
+
+
+</script>
+</body>
+</html>
