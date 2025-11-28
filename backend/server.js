@@ -26,7 +26,7 @@ const pool = require("./db/connection");
 
 app.get("/test-db", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT 1+1 AS result");
+    const [rows] = await pool.query("SELECT 3+1 AS result");
     res.send(rows);
   } catch (e) {
     res.status(500).send(e.message);
