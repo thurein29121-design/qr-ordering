@@ -3,6 +3,17 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db/connection");
 
+// GET all menu items
+router.get("/", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM menu_items ORDER BY id DESC");
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Menu DB Error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // ✅ Get menu items by category (string like "Drink", "Set", "Fruit")
 router.get("/:category", async (req, res) => {
   const category = req.params.category; // e.g. "Drink"
