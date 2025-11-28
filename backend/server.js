@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 import menuRoutes from './routes/menuRoutes.js'; 
 import orderRoutes from './routes/orderRoutes.js';
 import tableRoutes from './routes/tableRoutes.js';
-import pool from './database/connection.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import adminMenuRoutes from './routes/adminMenuRoutes.js';
+import pool from './db/connection.js';
 
 dotenv.config();
 const app = express();
@@ -16,6 +18,7 @@ app.use(express.json());
 app.use('/api/menu', menuRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/tables', tableRoutes);
+app.use("/api/admin/menu", adminMenuRoutes);
 
 // Test DB route (must be BEFORE app.listen)
 app.get('/test-db', async (req, res) => {
