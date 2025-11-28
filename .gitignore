@@ -2,3 +2,4 @@ node_modules/
 public/image/raining_background.mp4
 public/image/*.mp4
 ssl/
+.env
