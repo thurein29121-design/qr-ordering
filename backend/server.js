@@ -11,6 +11,7 @@ app.use(express.json());
 // ROUTES
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 const tableRoutes = require("./routes/tableRoutes");
 const adminMenuRoutes = require("./routes/adminMenuRoutes");
 
@@ -18,6 +19,7 @@ app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/admin/menu", adminMenuRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // DB TEST ROUTE
 const pool = require("./db/connection");
