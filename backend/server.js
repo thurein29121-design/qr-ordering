@@ -1,38 +1,36 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import menuRoutes from './routes/menuRoutes.js'; 
-import orderRoutes from './routes/orderRoutes.js';
-import tableRoutes from './routes/tableRoutes.js';
-import analyticsRoutes from './routes/analyticsRoutes.js';
-import adminMenuRoutes from './routes/adminMenuRoutes.js';
-import pool from './db/connection.js';
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
 dotenv.config();
-const app = express();
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use('/api/menu', menuRoutes);
-app.use('/api/order', orderRoutes);
-app.use('/api/tables', tableRoutes);
+// ROUTES
+const menuRoutes = require("./backend/routes/menuRoutes");
+const orderRoutes = require("./backend/routes/orderRoutes");
+const tableRoutes = require("./backend/routes/tableRoutes");
+const adminMenuRoutes = require("./backend/routes/adminMenuRoutes");
+
+app.use("/api/menu", menuRoutes);
+app.use("/api/order", orderRoutes);
+app.use("/api/tables", tableRoutes);
 app.use("/api/admin/menu", adminMenuRoutes);
 
-// Test DB route (must be BEFORE app.listen)
-app.get('/test-db', async (req, res) => {
+// DB TEST ROUTE
+const pool = require("./db/connection");
+
+app.get("/test-db", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT 1 + 1 AS result");
-    res.json({ success: true, db: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const [rows] = await pool.query("SELECT 1+1 AS result");
+    res.send(rows);
+  } catch (e) {
+    res.status(500).send(e.message);
   }
 });
 
-// IMPORTANT for Render
+// START SERVER
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

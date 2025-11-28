@@ -1,17 +1,14 @@
 {
-  "name": "tasteqr",
+  "name": "qr-ordering",
   "version": "1.0.0",
-  "description": "TasteQR — QR-based restaurant ordering (XAMPP MySQL + Node.js)",
-  "private": true,
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "exceljs": "^4.4.0",
-    "express": "^5.1.0",
-    "mysql2": "^3.15.2"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mysql2": "^3.6.0"
   }
 }
