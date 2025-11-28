@@ -1,58 +1,87 @@
+// backend/routes/adminMenuRoutes.js
 const express = require("express");
 const router = express.Router();
 const db = require("../db/connection");
 
-// ✅ Get all menu items
+// GET /api/admin/menu -> all menu items
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM menu_items ORDER BY id DESC");
+    const [rows] = await db.query(
+      "SELECT * FROM menu_items ORDER BY id DESC"
+    );
     res.json(rows);
   } catch (err) {
-    console.error("❌ Fetch menu failed:", err);
-    res.status(500).json({ error: "Database fetch failed" });
+    console.error("Admin menu list error:", err.message);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-// ✅ Add new menu item
+// POST /api/admin/menu -> create menu item
 router.post("/", async (req, res) => {
+  const { name, price, category, description, image_url } = req.body;
+  if (!name || price == null || !category) {
+    return res.status(400).json({ error: "name, price, category required" });
+  }
   try {
-    const { name, price, image, category } = req.body;
-    if (!name || !price) return res.status(400).json({ error: "Missing fields" });
-
     const [result] = await db.query(
-      "INSERT INTO menu_items (name, price, image, category) VALUES (?, ?, ?, ?)",
-      [name, price, image || null, category || null]
+      `
+      INSERT INTO menu_items (name, price, category, description, image_url)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [name, price, category, description || "", image_url || ""]
     );
-    res.json({ success: true, id: result.insertId });
+    const [rows] = await db.query(
+      "SELECT * FROM menu_items WHERE id = ?",
+      [result.insertId]
+    );
+    res.status(201).json(rows[0]);
   } catch (err) {
-    console.error("❌ Insert failed:", err);
-    res.status(500).json({ error: "Insert failed" });
+    console.error("Admin menu create error:", err.message);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-// ✅ Update existing menu item
+// PUT /api/admin/menu/:id -> update
 router.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  const { name, price, category, description, image_url } = req.body;
   try {
-    const { name, price, image, category } = req.body;
     const [result] = await db.query(
-      "UPDATE menu_items SET name=?, price=?, image=?, category=? WHERE id=?",
-      [name, price, image, category, req.params.id]
+      `
+      UPDATE menu_items
+      SET name = ?, price = ?, category = ?, description = ?, image_url = ?
+      WHERE id = ?
+      `,
+      [name, price, category, description || "", image_url || "", id]
     );
-    res.json({ success: result.affectedRows > 0 });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Not found" });
+
+    const [rows] = await db.query(
+      "SELECT * FROM menu_items WHERE id = ?",
+      [id]
+    );
+    res.json(rows[0]);
   } catch (err) {
-    console.error("❌ Update failed:", err);
-    res.status(500).json({ error: "Update failed" });
+    console.error("Admin menu update error:", err.message);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-// ✅ Delete menu item
+// DELETE /api/admin/menu/:id
 router.delete("/:id", async (req, res) => {
+  const id = req.params.id;
   try {
-    const [result] = await db.query("DELETE FROM menu_items WHERE id=?", [req.params.id]);
-    res.json({ success: result.affectedRows > 0 });
+    const [result] = await db.query(
+      "DELETE FROM menu_items WHERE id = ?",
+      [id]
+    );
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Not found" });
+    res.json({ success: true });
   } catch (err) {
-    console.error("❌ Delete failed:", err);
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Admin menu delete error:", err.message);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
