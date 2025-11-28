@@ -9,10 +9,10 @@ app.use(cors());
 app.use(express.json());
 
 // ROUTES
-const menuRoutes = require("./backend/routes/menuRoutes");
-const orderRoutes = require("./backend/routes/orderRoutes");
-const tableRoutes = require("./backend/routes/tableRoutes");
-const adminMenuRoutes = require("./backend/routes/adminMenuRoutes");
+const menuRoutes = require("./routes/menuRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const tableRoutes = require("./routes/tableRoutes");
+const adminMenuRoutes = require("./routes/adminMenuRoutes");
 
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
