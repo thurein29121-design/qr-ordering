@@ -31,7 +31,7 @@ app.get("/test-db", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
+app.use(express.static(path.join(__dirname, "..", "public")));
 // ✅ Public APIs
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
