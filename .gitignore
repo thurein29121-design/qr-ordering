@@ -3,3 +3,6 @@ public/image/raining_background.mp4
 public/image/*.mp4
 ssl/
 .env
+node_modules/
+public/node_modules/
+backend/node_modules/
