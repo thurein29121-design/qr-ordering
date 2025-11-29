@@ -1,6 +1,6 @@
-// backend/server.js
 const express = require("express");
 const cors = require("cors");
+const path = require("path");   // ✅ REQUIRED
 require("dotenv").config();
 
 const menuRoutes = require("./routes/menuRoutes");
@@ -12,39 +12,43 @@ const pool = require("./db/connection");
 const { generateAdminToken, requireAdmin } = require("./middleware/auth");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// ✅ health check
+// Health check
 app.get("/", (req, res) => {
   res.json({ ok: true, message: "QR Ordering API running" });
 });
 
-// ✅ DB test
+// DB test
 app.get("/test-db", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT 1 + 1 AS result");
     res.json({ success: true, db: rows });
-  } catch (error) {
-    console.error("DB test error:", error.message);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// Static files
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));
-// ✅ Public APIs
+
+// API routes
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/tables", tableRoutes);
+app.use("/api/admin/menu", requireAdmin, adminMenuRoutes);
+app.use("/api/analytics", requireAdmin, analyticsRoutes);
 
-// ✅ Admin login (env-based creds)
-app.post("/api/admin/login", async (req, res) => {
+// Admin login
+app.post("/api/admin/login", (req, res) => {
   const { username, password } = req.body;
-  const envUser = process.env.ADMIN_USER || "admin";
-  const envPass = process.env.ADMIN_PASSWORD || "admin";
 
-  if (username !== envUser || password !== envPass) {
+  if (
+    username !== (process.env.ADMIN_USER || "admin") ||
+    password !== (process.env.ADMIN_PASSWORD || "admin")
+  ) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
@@ -52,20 +56,16 @@ app.post("/api/admin/login", async (req, res) => {
   res.json({ token });
 });
 
-// ✅ Admin-protected routes
-app.use("/api/admin/menu", requireAdmin, adminMenuRoutes);
-app.use("/api/analytics", requireAdmin, analyticsRoutes);
+// React catch-all
+app.get("*", (req, res) => {
+  res.sendFile(path.join(publicDir, "index.html"));
+});
 
 // 404 fallback
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
-});
-
+// PORT
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Running on ${PORT}`));
