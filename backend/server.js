@@ -21,7 +21,7 @@ app.get("/health", (req, res) => {
 });
 
 // ---- SERVE PUBLIC FRONTEND FILES ----
-const publicDir = path.join(__dirname, "..", "public");
+const publicDir = path.join(__dirname, "public");
 app.use(express.static(publicDir));
 
 // ---- API ROUTES ----
