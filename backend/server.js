@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");   // ✅ REQUIRED
+const path = require("path");
 require("dotenv").config();
 
 const menuRoutes = require("./routes/menuRoutes");
@@ -16,25 +16,15 @@ app.use(cors());
 app.use(express.json());
 
 // Health check
-app.get("/", (req, res) => {
-  res.json({ ok: true, message: "QR Ordering API running" });
+app.get("/health", (req, res) => {
+  res.json({ ok: true, message: "Server running" });
 });
 
-// DB test
-app.get("/test-db", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT 1 + 1 AS result");
-    res.json({ success: true, db: rows });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Static files
+// ---- SERVE PUBLIC FRONTEND FILES ----
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));
 
-// API routes
+// ---- API ROUTES ----
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/tables", tableRoutes);
@@ -56,16 +46,13 @@ app.post("/api/admin/login", (req, res) => {
   res.json({ token });
 });
 
-// React catch-all
+// ---- FRONTEND CATCH-ALL (must be last) ----
 app.get("*", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
-// 404 fallback
-app.use((req, res) => {
-  res.status(404).json({ error: "Not found" });
-});
-
-// PORT
+// ---- START SERVER ----
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Running on ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
