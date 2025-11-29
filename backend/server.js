@@ -31,7 +31,8 @@ app.get("/test-db", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-app.use(express.static(path.join(__dirname, "..", "public")));
+const publicDir = path.join(__dirname, "..", "public");
+app.use(express.static(publicDir));
 // ✅ Public APIs
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
@@ -65,6 +66,6 @@ app.get("*", (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
