@@ -1,64 +1,94 @@
-// public/sales.js
+/**********************************************
+ * SALES DASHBOARD — AUTH + FETCH HELPERS
+ **********************************************/
 
+function getAuthHeaders() {
+    return {
+        "Authorization": "Bearer " + (localStorage.getItem("adminToken") || "")
+    };
+}
+
+function requireLoginAgain() {
+    alert("Your session expired. Please login again.");
+    localStorage.removeItem("adminToken");
+    window.location.href = "admin.html";
+}
+
+
+/**********************************************
+ * GENERIC FETCH WRAPPER WITH ERROR HANDLING
+ **********************************************/
 async function fetchJSON(url) {
-  const token = localStorage.getItem('adminToken') || '';
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) throw new Error(`Failed: ${url} (${res.status})`);
-  return res.json();
+    const res = await fetch(url, { headers: getAuthHeaders() });
+
+    if (res.status === 401) {
+        requireLoginAgain();
+        return null;
+    }
+
+    if (!res.ok) {
+        console.error("❌ Fetch failed:", res.status, url);
+        return null;
+    }
+
+    try {
+        return await res.json();
+    } catch (e) {
+        console.error("❌ JSON parse error:", e);
+        requireLoginAgain();
+        return null;
+    }
 }
 
 
-function formatYen(v) {
-  return "¥" + Number(v || 0).toLocaleString();
-}
-
+/**********************************************
+ * LOAD DASHBOARD DATA
+ **********************************************/
 async function loadDashboard() {
-  try {
-    // 1) Today's sales
-    const today = await fetchJSON("/api/analytics/sales/today");
-    document.getElementById("today-sales").textContent = formatYen(today.total_sales || 0);
-    document.getElementById("today-sessions").textContent =
-      `${today.sessions || 0} sessions, ${today.total_items || 0} items`;
+    try {
+        const daily = await fetchJSON("/api/analytics/daily");
+        const monthly = await fetchJSON("/api/analytics/monthly");
+        const top = await fetchJSON("/api/analytics/top-items");
 
-    // 2) Weekday vs weekend
-    const ww = await fetchJSON("/api/analytics/sales/weekday-weekend");
-    const weekday = ww.weekday || {};
-    const weekend = ww.weekend || {};
+        if (!daily || !monthly || !top) {
+            console.warn("⚠️ Missing data from server");
+            return;
+        }
 
-    document.getElementById("weekday-avg").textContent = formatYen(weekday.avg_receipt || 0);
-    document.getElementById("weekday-total").textContent = "Total: " + formatYen(weekday.total_sales || 0);
+        // DAILY REVENUE
+        document.getElementById("daily-total").textContent =
+            daily.total || 0;
 
-    document.getElementById("weekend-avg").textContent = formatYen(weekend.avg_receipt || 0);
-    document.getElementById("weekend-total").textContent = "Total: " + formatYen(weekend.total_sales || 0);
+        // MONTHLY REVENUE
+        document.getElementById("monthly-total").textContent =
+            monthly.total || 0;
 
-    let boost = 0;
-    if (weekday.avg_receipt > 0 && weekend.avg_receipt > 0) {
-      boost = ((weekend.avg_receipt - weekday.avg_receipt) / weekday.avg_receipt) * 100;
+        // TOP ITEMS
+        const topList = document.getElementById("top-items");
+        topList.innerHTML = top.map(item => `
+            <li>
+                <b>${item.name}</b>
+                — ${item.count} sold (¥${item.revenue})
+            </li>
+        `).join("");
+
+    } catch (err) {
+        console.error("❌ dashboard error:", err);
+        alert("Failed to load sales dashboard.");
     }
-    document.getElementById("weekend-boost").textContent = boost.toFixed(1) + "%";
-
-    // 3) Top items today
-    const topItems = await fetchJSON("/api/analytics/items/top-today");
-    const tbody = document.getElementById("top-items-body");
-
-    if (!Array.isArray(topItems) || topItems.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3">No data for today.</td></tr>`;
-    } else {
-      tbody.innerHTML = topItems.map(i => `
-        <tr>
-          <td>${i.name}</td>
-          <td>${i.total_qty}</td>
-          <td>${formatYen(i.revenue)}</td>
-        </tr>
-      `).join("");
-    }
-
-  } catch (err) {
-    console.error("❌ dashboard error:", err);
-    alert("Failed to load sales dashboard data.");
-  }
 }
 
-document.addEventListener("DOMContentLoaded", loadDashboard);
+
+/**********************************************
+ * INIT
+ **********************************************/
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+        alert("Please login as admin first.");
+        window.location.href = "admin.html";
+        return;
+    }
+
+    loadDashboard();
+});

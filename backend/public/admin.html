@@ -93,10 +93,19 @@
 
 <script>
 /**********************************************
- * ADMIN AUTH — POPUP LOGIN
+ * ADMIN AUTH POPUP — ALWAYS SHOW WHEN NEEDED
  **********************************************/
+document.addEventListener("DOMContentLoaded", () => {
+
+    const token = localStorage.getItem("adminToken");
+    if (!token) showAdminLogin();
+
+    loadOrders(false); // load after DOM is ready
+});
+
 
 function showAdminLogin() {
+    // prevent duplicates
     if (document.getElementById("admin-login-popup")) return;
 
     const popup = document.createElement("div");
@@ -114,8 +123,10 @@ function showAdminLogin() {
             width:330px; text-align:center;
         ">
             <h2>Admin Login</h2>
-            <input id="admin-user" placeholder="Username" style="width:100%; padding:8px; margin-top:10px;">
-            <input id="admin-pass" type="password" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
+            <input id="admin-user" placeholder="Username"
+                   style="width:100%; padding:8px; margin-top:10px;">
+            <input id="admin-pass" type="password" placeholder="Password"
+                   style="width:100%; padding:8px; margin-top:10px;">
             <button id="admin-login-btn" style="
                 width:100%; padding:10px; margin-top:15px;
                 background:#007bff; color:white; border:none; border-radius:8px;
@@ -126,14 +137,15 @@ function showAdminLogin() {
 
     document.body.appendChild(popup);
 
-    document.getElementById("admin-login-btn").addEventListener("click", handleAdminLogin);
+    document.getElementById("admin-login-btn").onclick = handleAdminLogin;
 }
+
 
 async function handleAdminLogin() {
     const username = document.getElementById("admin-user").value.trim();
     const password = document.getElementById("admin-pass").value.trim();
-
     const errBox = document.getElementById("admin-login-error");
+
     if (!username || !password) {
         errBox.textContent = "Please enter both fields.";
         return;
@@ -149,7 +161,7 @@ async function handleAdminLogin() {
         const data = await res.json();
 
         if (!res.ok) {
-            errBox.textContent = data.error || "Login failed.";
+            errBox.textContent = data.error || "Login failed";
             return;
         }
 
@@ -158,51 +170,42 @@ async function handleAdminLogin() {
         document.getElementById("admin-login-popup")?.remove();
         loadOrders(false);
 
-    } catch (e) {
-        errBox.textContent = "Network error.";
+    } catch {
+        errBox.textContent = "Network error";
     }
 }
 
 
-// Auto login check
-(function initAdminAuth() {
-    if (!localStorage.getItem("adminToken")) {
-        showAdminLogin();
-    }
-})();
-
-
 /**********************************************
- * FETCH ORDERS WITH AUTH TOKEN
+ * FETCH ORDERS — ALWAYS AUTHORIZED
  **********************************************/
-
 function getAuthHeaders() {
     return {
         "Authorization": "Bearer " + (localStorage.getItem("adminToken") || "")
     };
 }
 
-async function loadOrders(playSound = true) {
-    const tbody = document.querySelector('#order-table tbody');
-    if (!tbody) return;
+async function loadOrders() {
+    const tbody = document.querySelector("#order-table tbody");
 
     try {
-        const res = await fetch('/api/order/list', { headers: getAuthHeaders() });
+        const res = await fetch("/api/order/list", {
+            headers: getAuthHeaders()
+        });
 
-        // If token missing/expired → login popup
         if (res.status === 401) {
             showAdminLogin();
             return;
         }
 
-        const data = await res.json();
+        const list = await res.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">No orders yet.</td></tr>';
+        if (!Array.isArray(list)) {
+            tbody.innerHTML = "<tr><td colspan='6'>Error loading data</td></tr>";
             return;
         }
 
-        tbody.innerHTML = data.map(o => `
+        tbody.innerHTML = list.map(o => `
             <tr>
                 <td>${o.id}</td>
                 <td>${o.table_no}</td>
@@ -214,34 +217,22 @@ async function loadOrders(playSound = true) {
         `).join("");
 
     } catch (err) {
-        console.error("Order load error:", err);
+        console.error("❌ order load error:", err);
     }
 }
 
 
 /**********************************************
- * BUTTONS: REFRESH + SALES
+ * BUTTONS
  **********************************************/
-
 document.addEventListener("DOMContentLoaded", () => {
-
-    const refreshBtn = document.getElementById("refresh");
-    if (refreshBtn) {
-        refreshBtn.onclick = () => loadOrders(false);
-    }
-
-    const salesBtn = document.getElementById("sales-btn");
-    if (salesBtn) {
-        salesBtn.onclick = () => {
-            window.location.href = "sales.html";
-        };
-    }
-
-    loadOrders(false);
+    document.getElementById("refresh").onclick = () => loadOrders(false);
+    document.getElementById("sales-btn").onclick = () => {
+        window.location.href = "sales.html";
+    };
 });
-
-
 </script>
+
 
 </body>
 </html>
