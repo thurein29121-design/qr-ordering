@@ -95,10 +95,6 @@
 let lastOrderIds = new Set();
 
 
-
-
-
-// load orders
 async function loadOrders(playSound = true) {
   try {
     const res = await fetch('/api/order/list');
@@ -135,8 +131,6 @@ async function loadOrders(playSound = true) {
     });
 
     lastOrderIds = newIds;
-
-
 
     attachViewButtons();
 

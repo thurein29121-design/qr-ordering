@@ -1,59 +1,155 @@
-// backend/routes/orderRoutes.js
 const express = require("express");
 const router = express.Router();
-const {
-  createOrder,
-  listOrders,
-  getOrder,
-  updateOrderStatus
-} = require("../models/orderModel");
+const pool = require("../db/connection");
 
-// POST /api/order  -> create new order
-// body: { tableNo, items: [{ menu_item_id, name, price, qty }] }
-router.post("/", async (req, res) => {
+// ------------------------
+// CREATE NEW ORDER
+// ------------------------
+router.post("/new", async (req, res) => {
   try {
-    const orderId = await createOrder(req.body);
-    const order = await getOrder(orderId);
-    res.status(201).json(order);
-  } catch (err) {
-    console.error("Create order error:", err.message);
-    res.status(400).json({ error: err.message || "Failed to create order" });
+    const { tableNo, items, total } = req.body;
+
+    const [result] = await pool.query(
+      "INSERT INTO orders (table_no, total, status) VALUES (?, ?, ?)",
+      [tableNo, total, "pending"]
+    );
+
+    const orderId = result.insertId;
+
+    // insert items
+    for (const it of items) {
+      await pool.query(
+        `INSERT INTO order_items 
+         (order_id, name, price, qty, size, spice, juice, addons, subtotal)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orderId,
+          it.name,
+          it.price,
+          it.qty,
+          it.size,
+          it.spice,
+          it.juice ? it.juice.name : null,
+          JSON.stringify(it.addons || []),
+          it.subtotal,
+        ]
+      );
+    }
+
+    res.json({ success: true, orderId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// GET /api/order -> list orders
-router.get("/", async (req, res) => {
-  try {
-    const orders = await listOrders();
-    res.json(orders);
-  } catch (err) {
-    console.error("List orders error:", err.message);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-// GET /api/order/:id -> order + items
+// ------------------------
+// GET ORDER BY ID
+// ------------------------
 router.get("/:id", async (req, res) => {
   try {
-    const order = await getOrder(req.params.id);
-    if (!order) return res.status(404).json({ error: "Not found" });
-    res.json(order);
+    const { id } = req.params;
+
+    const [[order]] = await pool.query(
+      "SELECT * FROM orders WHERE id = ?",
+      [id]
+    );
+
+    if (!order) return res.json({});
+
+    const [items] = await pool.query(
+      "SELECT * FROM order_items WHERE order_id = ?",
+      [id]
+    );
+
+    res.json({ order, items });
   } catch (err) {
-    console.error("Get order error:", err.message);
-    res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// PATCH /api/order/:id/status -> update status
-router.patch("/:id/status", async (req, res) => {
-  const { status } = req.body;
+// ------------------------
+// ORDER HISTORY BY TABLE
+// ------------------------
+router.get("/history/:table", async (req, res) => {
   try {
-    const ok = await updateOrderStatus(req.params.id, status);
-    if (!ok) return res.status(404).json({ error: "Not found" });
-    res.json({ success: true });
+    const tableNo = req.params.table;
+
+    const [orders] = await pool.query(
+      "SELECT * FROM orders WHERE table_no = ? ORDER BY created_at DESC",
+      [tableNo]
+    );
+
+    for (const order of orders) {
+      const [items] = await pool.query(
+        "SELECT * FROM order_items WHERE order_id = ?",
+        [order.id]
+      );
+      order.items = items;
+    }
+
+    res.json(orders);
   } catch (err) {
-    console.error("Update status error:", err.message);
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ------------------------
+// ADMIN GET ALL ORDERS
+// ------------------------
+router.get("/list", async (req, res) => {
+  try {
+    const [data] = await pool.query(
+      "SELECT * FROM orders ORDER BY created_at DESC"
+    );
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ------------------------
+// CHECKOUT TABLE (receipt)
+// ------------------------
+router.post("/checkout/:table", async (req, res) => {
+  try {
+    const tableNo = req.params.table;
+
+    // get all current orders
+    const [orders] = await pool.query(
+      "SELECT * FROM orders WHERE table_no = ? AND status = 'pending'",
+      [tableNo]
+    );
+
+    if (!orders.length) {
+      return res.json({ success: false });
+    }
+
+    let sessionId = Date.now();
+
+    let allItems = [];
+
+    for (const order of orders) {
+      const [items] = await pool.query(
+        "SELECT * FROM order_items WHERE order_id = ?",
+        [order.id]
+      );
+      allItems.push(...items);
+
+      await pool.query(
+        "UPDATE orders SET status = 'done', session_id = ? WHERE id = ?",
+        [sessionId, order.id]
+      );
+    }
+
+    res.json({
+      success: true,
+      table_no: tableNo,
+      session_id: sessionId,
+      items: allItems,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
