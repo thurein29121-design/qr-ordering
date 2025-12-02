@@ -92,98 +92,249 @@
   
 
 <script>
-let lastOrderIds = new Set();
+/**********************************************
+ * ADMIN AUTH SYSTEM – POPUP LOGIN
+ **********************************************/
+
+// Create login popup dynamically
+function showLoginPopup() {
+    const popup = document.createElement("div");
+    popup.id = "admin-login-popup";
+    popup.style = `
+        position: fixed; inset: 0; display: flex;
+        justify-content: center; align-items: center;
+        background: rgba(0,0,0,0.5); z-index: 2000;
+    `;
+
+    popup.innerHTML = `
+        <div style="
+            background: white; padding: 25px; border-radius: 10px;
+            width: 350px; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        ">
+            <h2>Admin Login</h2>
+            <input id="admin-username" placeholder="Username" style="
+                width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px;
+            ">
+
+            <input id="admin-password" type="password" placeholder="Password" style="
+                width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px;
+            ">
+
+            <button id="admin-login-btn" style="
+                width: 100%; padding: 12px; margin-top: 15px;
+                background: #007bff; color: white; border: none; border-radius: 6px;
+                font-size: 16px; cursor: pointer;
+            ">Login</button>
+
+            <p id="admin-login-error" style="color:red; margin-top:10px;"></p>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    document.getElementById("admin-login-btn").addEventListener("click", adminLogin);
+}
+
+// Auto-run login popup if token missing
+(function checkAdminLogin() {
+    const token = localStorage.getItem("adminToken");
+    if (!token) showLoginPopup();
+})();
 
 
-async function loadOrders(playSound = true) {
-  try {
-    const res = await fetch('/api/order/list');
-    const data = await res.json();
-    const tbody = document.querySelector('#order-table tbody');
+// Perform login request
+async function adminLogin() {
+    const username = document.getElementById("admin-username").value.trim();
+    const password = document.getElementById("admin-password").value.trim();
 
-    if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6">No orders yet.</td></tr>';
-      return;
+    if (!username || !password) {
+        document.getElementById("admin-login-error").textContent = "Enter username & password";
+        return;
     }
 
-    tbody.innerHTML = data.map(o => `
-      <tr data-id="${o.id}" data-table="${o.table_no}">
-        <td>${o.id}</td>
-        <td>${o.table_no}</td>
-        <td>¥${Number(o.total).toFixed(2)}</td>
-        <td>${o.status}</td>
-        <td>${new Date(o.created_at).toLocaleString()}</td>
-        <td><button class="view-btn" data-id="${o.id}">View</button></td>
-      </tr>
-    `).join("");
+    try {
+        const res = await fetch("/api/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
 
-    // detect new orders
-    const newIds = new Set(data.map(o => o.id));
-    let hasNew = false;
-    
-    newIds.forEach(id => {
-      if (!lastOrderIds.has(id)) {
-        let row = document.querySelector(`tr[data-id="${id}"]`);
-        if (row) row.classList.add("new-order");
-        hasNew = true;
-        console.log("🆕 New order:", id);
-      }
-    });
-
-    lastOrderIds = newIds;
-
-    attachViewButtons();
-
-  } catch (err) {
-    console.error("❌ Failed to load orders:", err);
-  }
-}
-
-// view button
-function attachViewButtons() {
-  document.querySelectorAll(".view-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      try {
-        const res = await fetch(`/api/order/${id}`);
         const data = await res.json();
-        if (!data.order) return alert("Order not found");
 
-        const itemsText = data.items.map(i => {
-          let addons = [];
-          try { addons = i.addons ? JSON.parse(i.addons) : []; } catch {}
-          const details = [
-            i.size ? `Size: ${i.size}` : "",
-            i.spice ? `Spice: ${i.spice}` : "",
-            i.juice ? `Juice: ${i.juice}` : "",
-            addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : ""
-          ].filter(Boolean).join(", ");
+        if (!res.ok) {
+            document.getElementById("admin-login-error").textContent = data.error || "Login failed";
+            return;
+        }
 
-          return `${i.name} (${details}) × ${i.qty} = ¥${i.subtotal}`;
-        }).join("\n");
+        // Save token and remove popup
+        localStorage.setItem("adminToken", data.token);
+        document.getElementById("admin-login-popup")?.remove();
 
-        alert(
-          `Order #${id}\nTable: ${data.order.table_no}\nStatus: ${data.order.status}\nTotal: ¥${data.order.total}\n\nItems:\n${itemsText}`
-        );
-      } catch (e) {
-        console.error("❌ Failed to view order:", e);
-      }
-    });
-  });
+        loadMenu();
+
+    } catch (err) {
+        document.getElementById("admin-login-error").textContent = "Network error";
+    }
 }
 
-// buttons
-document.getElementById("refresh").onclick = () => loadOrders(false);
 
-document.getElementById("sales-btn").addEventListener("click", () => {
-  window.location.href = "/sales.html";
-});
 
-// auto refresh
-setInterval(() => loadOrders(true), 10000);
+/**********************************************
+ * ADMIN MENU MANAGEMENT
+ **********************************************/
 
-// initial load
-loadOrders(false);
+const API = "/api/admin/menu";
+
+function getHeaders() {
+    return {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + (localStorage.getItem("adminToken") || "")
+    };
+}
+
+
+// Load menu items
+async function loadMenu() {
+    try {
+        const res = await fetch(API, { headers: getHeaders() });
+
+        if (res.status === 401) return showLoginPopup();
+
+        const items = await res.json();
+
+        const container = document.getElementById("menu-list");
+        container.innerHTML = "";
+
+        items.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "menu-item";
+            div.innerHTML = `
+                <img src="${item.image || 'no-image.png'}" width="80" height="80">
+                <div class="menu-info">
+                    <h3>${item.name}</h3>
+                    <p>Price: ${item.price} Ks</p>
+                    <p>Category: ${item.category}</p>
+                </div>
+
+                <button class="edit-btn" data-id="${item.id}">Edit</button>
+                <button class="delete-btn" data-id="${item.id}">Delete</button>
+            `;
+
+            container.appendChild(div);
+        });
+
+        bindEditButtons();
+        bindDeleteButtons();
+    } catch (err) {
+        console.error("Menu load failed:", err);
+    }
+}
+
+
+
+// Add new menu item
+document.getElementById("add-item-btn").onclick = async () => {
+    const name = document.getElementById("name").value.trim();
+    const price = Number(document.getElementById("price").value.trim());
+    const category = document.getElementById("category").value.trim();
+    let image = document.getElementById("image").value.trim();
+
+    // Normalize image path
+    if (image && !image.startsWith("uploads/")) {
+        image = "uploads/" + image.replace(/^.*[\\/]/, "");
+    }
+
+    if (!name || !price) return alert("Name and Price required!");
+
+    try {
+        await fetch(API, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({ name, price, category, image })
+        });
+
+        loadMenu();
+
+    } catch (err) {
+        console.error("Add menu error:", err);
+    }
+};
+
+
+
+/**********************************************
+ * EDIT MENU ITEM
+ **********************************************/
+
+function bindEditButtons() {
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.onclick = async () => {
+            const id = btn.dataset.id;
+
+            const res = await fetch(`${API}/${id}`, { headers: getHeaders() });
+            const item = await res.json();
+
+            document.getElementById("edit-id").value = item.id;
+            document.getElementById("edit-name").value = item.name;
+            document.getElementById("edit-price").value = item.price;
+            document.getElementById("edit-category").value = item.category;
+            document.getElementById("edit-image").value = item.image;
+
+            document.getElementById("edit-modal").style.display = "flex";
+        };
+    });
+}
+
+
+// Save edited item
+document.getElementById("save-edit-btn").onclick = async () => {
+    const id = document.getElementById("edit-id").value;
+    const name = document.getElementById("edit-name").value;
+    const price = document.getElementById("edit-price").value;
+    const category = document.getElementById("edit-category").value;
+    const image = document.getElementById("edit-image").value;
+
+    try {
+        await fetch(`${API}/${id}`, {
+            method: "PUT",
+            headers: getHeaders(),
+            body: JSON.stringify({ name, price, category, image })
+        });
+
+        document.getElementById("edit-modal").style.display = "none";
+        loadMenu();
+
+    } catch (err) {
+        console.error("Update failed:", err);
+    }
+};
+
+
+
+/**********************************************
+ * DELETE MENU ITEM
+ **********************************************/
+
+function bindDeleteButtons() {
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.onclick = async () => {
+            if (!confirm("Delete item?")) return;
+
+            try {
+                await fetch(`${API}/${btn.dataset.id}`, {
+                    method: "DELETE",
+                    headers: getHeaders()
+                });
+
+                loadMenu();
+
+            } catch (err) {
+                console.error("Delete failed:", err);
+            }
+        };
+    });
+}
+
 </script>
 
 </body>

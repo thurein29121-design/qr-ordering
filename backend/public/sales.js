@@ -1,10 +1,14 @@
 // public/sales.js
 
 async function fetchJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed: ${url}`);
+  const token = localStorage.getItem('adminToken') || '';
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error(`Failed: ${url} (${res.status})`);
   return res.json();
 }
+
 
 function formatYen(v) {
   return "¥" + Number(v || 0).toLocaleString();
