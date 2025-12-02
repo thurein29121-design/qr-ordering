@@ -91,95 +91,77 @@
 
   
 
-<script>
 /**********************************************
- * ADMIN AUTH POPUP — ALWAYS SHOW WHEN NEEDED
+ * ALWAYS SHOW LOGIN POPUP FIRST
  **********************************************/
 document.addEventListener("DOMContentLoaded", () => {
-
-    const token = localStorage.getItem("adminToken");
-    if (!token) showAdminLogin();
-
-    loadOrders(false); // load after DOM is ready
+    if (!localStorage.getItem("adminToken")) {
+        showAdminLogin();
+    } else {
+        loadOrders();
+    }
 });
 
-
+/**********************************************
+ * LOGIN POPUP
+ **********************************************/
 function showAdminLogin() {
-    // prevent duplicates
     if (document.getElementById("admin-login-popup")) return;
 
-    const popup = document.createElement("div");
-    popup.id = "admin-login-popup";
-    popup.style = `
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,0.5);
-        display:flex; justify-content:center; align-items:center;
-        z-index:9999;
+    const box = document.createElement("div");
+    box.id = "admin-login-popup";
+    box.style = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.5);
+        display:flex; justify-content:center; align-items:center; z-index:9999;
     `;
-
-    popup.innerHTML = `
-        <div style="
-            background:white; padding:25px; border-radius:10px;
-            width:330px; text-align:center;
-        ">
-            <h2>Admin Login</h2>
-            <input id="admin-user" placeholder="Username"
-                   style="width:100%; padding:8px; margin-top:10px;">
-            <input id="admin-pass" type="password" placeholder="Password"
-                   style="width:100%; padding:8px; margin-top:10px;">
-            <button id="admin-login-btn" style="
-                width:100%; padding:10px; margin-top:15px;
-                background:#007bff; color:white; border:none; border-radius:8px;
-            ">Login</button>
-            <p id="admin-login-error" style="color:red; margin-top:10px;"></p>
+    box.innerHTML = `
+        <div style="background:white;padding:20px;border-radius:10px;width:300px;text-align:center;">
+            <h3>Admin Login</h3>
+            <input id="admin-user" placeholder="Username" style="width:100%;padding:8px;margin-top:10px;">
+            <input id="admin-pass" type="password" placeholder="Password" style="width:100%;padding:8px;margin-top:10px;">
+            <button id="admin-login-btn" style="margin-top:15px;padding:10px;background:#007bff;color:white;border:none;border-radius:6px;cursor:pointer;">
+                Login
+            </button>
+            <p id="admin-login-error" style="color:red;margin-top:10px;"></p>
         </div>
     `;
-
-    document.body.appendChild(popup);
+    document.body.appendChild(box);
 
     document.getElementById("admin-login-btn").onclick = handleAdminLogin;
 }
 
-
 async function handleAdminLogin() {
-    const username = document.getElementById("admin-user").value.trim();
-    const password = document.getElementById("admin-pass").value.trim();
-    const errBox = document.getElementById("admin-login-error");
+    const user = document.getElementById("admin-user").value.trim();
+    const pass = document.getElementById("admin-pass").value.trim();
+    const err = document.getElementById("admin-login-error");
 
-    if (!username || !password) {
-        errBox.textContent = "Please enter both fields.";
+    if (!user || !pass) {
+        err.textContent = "Enter username & password.";
         return;
     }
 
-    try {
-        const res = await fetch("/api/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password })
-        });
+    const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user, password: pass })
+    });
 
-        const data = await res.json();
+    const data = await res.json();
 
-        if (!res.ok) {
-            errBox.textContent = data.error || "Login failed";
-            return;
-        }
-
-        localStorage.setItem("adminToken", data.token);
-
-        document.getElementById("admin-login-popup")?.remove();
-        loadOrders(false);
-
-    } catch {
-        errBox.textContent = "Network error";
+    if (!res.ok) {
+        err.textContent = data.error || "Login failed.";
+        return;
     }
+
+    localStorage.setItem("adminToken", data.token);
+    document.getElementById("admin-login-popup").remove();
+    loadOrders();
 }
 
-
 /**********************************************
- * FETCH ORDERS — ALWAYS AUTHORIZED
+ * FETCH ORDERS
  **********************************************/
-function getAuthHeaders() {
+function authHeaders() {
     return {
         "Authorization": "Bearer " + (localStorage.getItem("adminToken") || "")
     };
@@ -189,49 +171,49 @@ async function loadOrders() {
     const tbody = document.querySelector("#order-table tbody");
 
     try {
-        const res = await fetch("/api/order/list", {
-            headers: getAuthHeaders()
-        });
+        // FIXED ROUTE (REAL ONE)
+        const res = await fetch("/api/order", { headers: authHeaders() });
 
         if (res.status === 401) {
             showAdminLogin();
             return;
         }
 
-        const list = await res.json();
+        const orders = await res.json();
 
-        if (!Array.isArray(list)) {
-            tbody.innerHTML = "<tr><td colspan='6'>Error loading data</td></tr>";
+        if (!Array.isArray(orders)) {
+            tbody.innerHTML = "<tr><td colspan='6'>No orders.</td></tr>";
             return;
         }
 
-        tbody.innerHTML = list.map(o => `
+        tbody.innerHTML = orders.map(o => `
             <tr>
                 <td>${o.id}</td>
                 <td>${o.table_no}</td>
                 <td>${o.total}</td>
                 <td>${o.status}</td>
                 <td>${o.created_at}</td>
-                <td><button class="view-btn" data-id="${o.id}">View</button></td>
+                <td><button>View</button></td>
             </tr>
         `).join("");
 
     } catch (err) {
-        console.error("❌ order load error:", err);
+        console.error(err);
+        tbody.innerHTML = "<tr><td colspan='6'>Server error.</td></tr>";
     }
 }
-
 
 /**********************************************
  * BUTTONS
  **********************************************/
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("refresh").onclick = () => loadOrders(false);
-    document.getElementById("sales-btn").onclick = () => {
-        window.location.href = "sales.html";
-    };
+    const refresh = document.getElementById("refresh");
+    if (refresh) refresh.onclick = () => loadOrders();
+
+    const sales = document.getElementById("sales-btn");
+    if (sales) sales.onclick = () => window.location.href = "sales.html";
 });
-</script>
+
 
 
 </body>
