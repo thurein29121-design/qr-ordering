@@ -93,62 +93,49 @@
 
 <script>
 /**********************************************
- * ADMIN AUTH SYSTEM – POPUP LOGIN
+ * ADMIN AUTH — POPUP LOGIN
  **********************************************/
 
-// Create login popup dynamically
-function showLoginPopup() {
+function showAdminLogin() {
+    if (document.getElementById("admin-login-popup")) return;
+
     const popup = document.createElement("div");
     popup.id = "admin-login-popup";
     popup.style = `
-        position: fixed; inset: 0; display: flex;
-        justify-content: center; align-items: center;
-        background: rgba(0,0,0,0.5); z-index: 2000;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.5);
+        display:flex; justify-content:center; align-items:center;
+        z-index:9999;
     `;
 
     popup.innerHTML = `
         <div style="
-            background: white; padding: 25px; border-radius: 10px;
-            width: 350px; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            background:white; padding:25px; border-radius:10px;
+            width:330px; text-align:center;
         ">
             <h2>Admin Login</h2>
-            <input id="admin-username" placeholder="Username" style="
-                width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px;
-            ">
-
-            <input id="admin-password" type="password" placeholder="Password" style="
-                width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px;
-            ">
-
+            <input id="admin-user" placeholder="Username" style="width:100%; padding:8px; margin-top:10px;">
+            <input id="admin-pass" type="password" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
             <button id="admin-login-btn" style="
-                width: 100%; padding: 12px; margin-top: 15px;
-                background: #007bff; color: white; border: none; border-radius: 6px;
-                font-size: 16px; cursor: pointer;
+                width:100%; padding:10px; margin-top:15px;
+                background:#007bff; color:white; border:none; border-radius:8px;
             ">Login</button>
-
             <p id="admin-login-error" style="color:red; margin-top:10px;"></p>
         </div>
     `;
 
     document.body.appendChild(popup);
 
-    document.getElementById("admin-login-btn").addEventListener("click", adminLogin);
+    document.getElementById("admin-login-btn").addEventListener("click", handleAdminLogin);
 }
 
-// Auto-run login popup if token missing
-(function checkAdminLogin() {
-    const token = localStorage.getItem("adminToken");
-    if (!token) showLoginPopup();
-})();
+async function handleAdminLogin() {
+    const username = document.getElementById("admin-user").value.trim();
+    const password = document.getElementById("admin-pass").value.trim();
 
-
-// Perform login request
-async function adminLogin() {
-    const username = document.getElementById("admin-username").value.trim();
-    const password = document.getElementById("admin-password").value.trim();
-
+    const errBox = document.getElementById("admin-login-error");
     if (!username || !password) {
-        document.getElementById("admin-login-error").textContent = "Enter username & password";
+        errBox.textContent = "Please enter both fields.";
         return;
     }
 
@@ -162,178 +149,97 @@ async function adminLogin() {
         const data = await res.json();
 
         if (!res.ok) {
-            document.getElementById("admin-login-error").textContent = data.error || "Login failed";
+            errBox.textContent = data.error || "Login failed.";
             return;
         }
 
-        // Save token and remove popup
         localStorage.setItem("adminToken", data.token);
+
         document.getElementById("admin-login-popup")?.remove();
+        loadOrders(false);
 
-        loadMenu();
-
-    } catch (err) {
-        document.getElementById("admin-login-error").textContent = "Network error";
+    } catch (e) {
+        errBox.textContent = "Network error.";
     }
 }
 
 
+// Auto login check
+(function initAdminAuth() {
+    if (!localStorage.getItem("adminToken")) {
+        showAdminLogin();
+    }
+})();
+
 
 /**********************************************
- * ADMIN MENU MANAGEMENT
+ * FETCH ORDERS WITH AUTH TOKEN
  **********************************************/
 
-const API = "/api/admin/menu";
-
-function getHeaders() {
+function getAuthHeaders() {
     return {
-        "Content-Type": "application/json",
         "Authorization": "Bearer " + (localStorage.getItem("adminToken") || "")
     };
 }
 
+async function loadOrders(playSound = true) {
+    const tbody = document.querySelector('#order-table tbody');
+    if (!tbody) return;
 
-// Load menu items
-async function loadMenu() {
     try {
-        const res = await fetch(API, { headers: getHeaders() });
+        const res = await fetch('/api/order/list', { headers: getAuthHeaders() });
 
-        if (res.status === 401) return showLoginPopup();
+        // If token missing/expired → login popup
+        if (res.status === 401) {
+            showAdminLogin();
+            return;
+        }
 
-        const items = await res.json();
+        const data = await res.json();
 
-        const container = document.getElementById("menu-list");
-        container.innerHTML = "";
+        if (!Array.isArray(data) || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">No orders yet.</td></tr>';
+            return;
+        }
 
-        items.forEach(item => {
-            const div = document.createElement("div");
-            div.className = "menu-item";
-            div.innerHTML = `
-                <img src="${item.image || 'no-image.png'}" width="80" height="80">
-                <div class="menu-info">
-                    <h3>${item.name}</h3>
-                    <p>Price: ${item.price} Ks</p>
-                    <p>Category: ${item.category}</p>
-                </div>
+        tbody.innerHTML = data.map(o => `
+            <tr>
+                <td>${o.id}</td>
+                <td>${o.table_no}</td>
+                <td>${o.total}</td>
+                <td>${o.status}</td>
+                <td>${o.created_at}</td>
+                <td><button class="view-btn" data-id="${o.id}">View</button></td>
+            </tr>
+        `).join("");
 
-                <button class="edit-btn" data-id="${item.id}">Edit</button>
-                <button class="delete-btn" data-id="${item.id}">Delete</button>
-            `;
-
-            container.appendChild(div);
-        });
-
-        bindEditButtons();
-        bindDeleteButtons();
     } catch (err) {
-        console.error("Menu load failed:", err);
+        console.error("Order load error:", err);
     }
 }
-
-
-
-// Add new menu item
-document.getElementById("add-item-btn").onclick = async () => {
-    const name = document.getElementById("name").value.trim();
-    const price = Number(document.getElementById("price").value.trim());
-    const category = document.getElementById("category").value.trim();
-    let image = document.getElementById("image").value.trim();
-
-    // Normalize image path
-    if (image && !image.startsWith("uploads/")) {
-        image = "uploads/" + image.replace(/^.*[\\/]/, "");
-    }
-
-    if (!name || !price) return alert("Name and Price required!");
-
-    try {
-        await fetch(API, {
-            method: "POST",
-            headers: getHeaders(),
-            body: JSON.stringify({ name, price, category, image })
-        });
-
-        loadMenu();
-
-    } catch (err) {
-        console.error("Add menu error:", err);
-    }
-};
-
 
 
 /**********************************************
- * EDIT MENU ITEM
+ * BUTTONS: REFRESH + SALES
  **********************************************/
 
-function bindEditButtons() {
-    document.querySelectorAll(".edit-btn").forEach(btn => {
-        btn.onclick = async () => {
-            const id = btn.dataset.id;
+document.addEventListener("DOMContentLoaded", () => {
 
-            const res = await fetch(`${API}/${id}`, { headers: getHeaders() });
-            const item = await res.json();
-
-            document.getElementById("edit-id").value = item.id;
-            document.getElementById("edit-name").value = item.name;
-            document.getElementById("edit-price").value = item.price;
-            document.getElementById("edit-category").value = item.category;
-            document.getElementById("edit-image").value = item.image;
-
-            document.getElementById("edit-modal").style.display = "flex";
-        };
-    });
-}
-
-
-// Save edited item
-document.getElementById("save-edit-btn").onclick = async () => {
-    const id = document.getElementById("edit-id").value;
-    const name = document.getElementById("edit-name").value;
-    const price = document.getElementById("edit-price").value;
-    const category = document.getElementById("edit-category").value;
-    const image = document.getElementById("edit-image").value;
-
-    try {
-        await fetch(`${API}/${id}`, {
-            method: "PUT",
-            headers: getHeaders(),
-            body: JSON.stringify({ name, price, category, image })
-        });
-
-        document.getElementById("edit-modal").style.display = "none";
-        loadMenu();
-
-    } catch (err) {
-        console.error("Update failed:", err);
+    const refreshBtn = document.getElementById("refresh");
+    if (refreshBtn) {
+        refreshBtn.onclick = () => loadOrders(false);
     }
-};
 
-
-
-/**********************************************
- * DELETE MENU ITEM
- **********************************************/
-
-function bindDeleteButtons() {
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.onclick = async () => {
-            if (!confirm("Delete item?")) return;
-
-            try {
-                await fetch(`${API}/${btn.dataset.id}`, {
-                    method: "DELETE",
-                    headers: getHeaders()
-                });
-
-                loadMenu();
-
-            } catch (err) {
-                console.error("Delete failed:", err);
-            }
+    const salesBtn = document.getElementById("sales-btn");
+    if (salesBtn) {
+        salesBtn.onclick = () => {
+            window.location.href = "sales.html";
         };
-    });
-}
+    }
+
+    loadOrders(false);
+});
+
 
 </script>
 
