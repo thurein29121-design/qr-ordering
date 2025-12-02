@@ -1,183 +1,186 @@
-// ===================== Verify table status first =====================
-(async () => {
-  const tableNo = localStorage.getItem("tasteqr_table");
-  if (!tableNo) {
-    window.location.href = "index.html";
-    return;
-  }
+// ===============================
+// CART SYSTEM
+// ===============================
 
-  try {
-    const res = await fetch(`/api/tables/${tableNo}/status`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    if (!data.active) {
-      alert("⚠️ Your table is closed. Please re-enter your table number.");
-      localStorage.removeItem("tasteqr_table");
-      window.location.href = "index.html";
-    }
-  } catch (e) {
-    console.error("Failed to verify table status:", e);
-    alert("Server error while checking table status.");
-    window.location.href = "index.html";
-  }
-})();
-
-
-// ===================== Cart logic =====================
-const backBtn = document.getElementById("backBtn");
-const cartList = document.getElementById("cartList");
-const subtotal = document.getElementById("subtotal");
-const checkoutBtn = document.getElementById("checkoutBtn");
-
-const tableNo = localStorage.getItem("tasteqr_table") || "999";
+// Load cart from localStorage or empty
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-// helper: compute unit price including extras
-function calculateItemUnitPrice(item) {
-  const base = Number(item.price) || 0;
-  const sizeExtra = Number(item.sizeExtra || 0);
-  const juiceExtra = Number(
-    item.juicePrice != null
-      ? item.juicePrice
-      : (item.juice && item.juice.price) || 0
-  );
-  const addonsExtra = (item.addons || []).reduce(
-    (sum, a) => sum + Number(a.price || 0),
-    0
-  );
-  return base + sizeExtra + juiceExtra + addonsExtra;
+// Save cart to localStorage
+function saveCart() {
+    localStorage.setItem("cart", JSON.stringify(cart));
 }
 
-// 🧾 Render cart items
+// ===============================
+// ADD ITEM TO CART
+// ===============================
+function addToCart(item) {
+    // Check if same item (same name + same size)
+    const existing = cart.find(
+        (i) =>
+            i.name === item.name &&
+            i.size === item.size &&
+            JSON.stringify(i.addons) === JSON.stringify(item.addons) &&
+            i.spice === item.spice &&
+            i.juice?.name === item.juice?.name
+    );
+
+    if (existing) {
+        existing.qty += item.qty;
+    } else {
+        cart.push(item);
+    }
+
+    saveCart();
+    updateCartButton();
+}
+
+// Update cart count bubble
+function updateCartButton() {
+    const count = cart.reduce((sum, i) => sum + i.qty, 0);
+    const btn = document.getElementById("cartCount");
+    if (btn) btn.textContent = count;
+}
+
+updateCartButton();
+
+// ===============================
+// RENDER CART PAGE
+// ===============================
 function renderCart() {
-  cartList.innerHTML = "";
-  let total = 0;
+    const container = document.getElementById("cartItems");
+    const totalPriceEl = document.getElementById("totalPrice");
 
-  if (cart.length === 0) {
-    cartList.innerHTML =
-      "<p style='text-align:center;color:#777;'>Your cart is empty.</p>";
-    subtotal.textContent = "¥0.00";
-    return;
-  }
+    if (!container) return;
 
-  cart.forEach((item, i) => {
-    const unitPrice = calculateItemUnitPrice(item);
-    const lineTotal = unitPrice * item.qty;
-    total += lineTotal;
+    container.innerHTML = "";
+    let total = 0;
 
-    const details = [
-      item.size ? `(${item.size})` : "",
-      item.spice ? `${item.spice}` : "",
-      item.juice?.name ? ` ${item.juice.name}` : "",
-      item.addons && item.addons.length > 0
-        ? item.addons.map(a => `+${a.name}`).join(" ")
-        : ""
-    ]
-      .filter(x => x !== "")
-      .join(", ");
+    cart.forEach((item, index) => {
+        const itemTotal = item.subtotal;
+        total += itemTotal;
 
-    const div = document.createElement("div");
-    div.className = "cart-item";
-    div.innerHTML = `
-      <img src="${item.image || ""}" alt="${item.name}">
-      <div class="cart-info">
-        <h4>${item.name} <small>${details}</small></h4>
-        <p>¥${unitPrice.toFixed(2)}</p>
-        <div class="qty-box">
-          <button onclick="changeQty(${i}, -1)">−</button>
-          <span>${item.qty}</span>
-          <button onclick="changeQty(${i}, 1)">＋</button>
-        </div>
-      </div>
-    `;
+        const div = document.createElement("div");
+        div.className = "cart-item";
 
-    cartList.appendChild(div);
-  });
+        div.innerHTML = `
+            <div class="cart-left">
+                <h3>${item.name}</h3>
+                <p>¥${item.price}</p>
+                ${item.size ? `<p>Size: ${item.size}</p>` : ""}
+                ${item.spice ? `<p>Spice: ${item.spice}</p>` : ""}
+                ${item.juice?.name ? `<p>Juice: ${item.juice.name}</p>` : ""}
+                ${item.addons?.length
+                    ? `<p>Addons: ${item.addons.map(a => a.name).join(", ")}</p>`
+                    : ""}
+            </div>
 
-  subtotal.textContent = `¥${total.toFixed(2)}`;
-}
+            <div class="cart-right">
+                <div class="qty-controls">
+                    <button onclick="changeQty(${index}, -1)">-</button>
+                    <span>${item.qty}</span>
+                    <button onclick="changeQty(${index}, 1)">+</button>
+                </div>
+                <h3>¥${itemTotal}</h3>
+                <button class="remove-btn" onclick="removeItem(${index})">🗑</button>
+            </div>
+        `;
 
-// 🔄 Change quantity
-function changeQty(index, delta) {
-  cart[index].qty += delta;
-  if (cart[index].qty <= 0) cart.splice(index, 1);
-  localStorage.setItem("cart", JSON.stringify(cart));
-  renderCart();
-}
-
-// ✅ Checkout (acts like “Place Order”)
-checkoutBtn.addEventListener("click", async () => {
-  if (cart.length === 0) {
-    alert("Your cart is empty!");
-    return;
-  }
-
-  checkoutBtn.disabled = true;
-  checkoutBtn.textContent = "Placing...";
-
-  const itemsPayload = cart.map(i => {
-    const unitPrice = calculateItemUnitPrice(i);
-    const qty = Number(i.qty || 0);
-    return {
-      name: i.name,
-      price: Number(i.price),          // base price
-      qty,
-      size: i.size || null,
-      spice: i.spice || null,
-      juice: i.juice || null,
-      addons: i.addons || [],
-      sizeExtra: Number(i.sizeExtra || 0),
-      juicePrice: Number(
-        i.juicePrice != null
-          ? i.juicePrice
-          : (i.juice && i.juice.price) || 0
-      ),
-      subtotal: unitPrice * qty        // full line subtotal (base + extras)
-    };
-  });
-
-  const total = cart.reduce(
-    (sum, i) => sum + calculateItemUnitPrice(i) * Number(i.qty || 0),
-    0
-  );
-
-  // ✅ Match backend API: tableNo / total
-  const payload = {
-    tableNo,
-    items: itemsPayload,
-    total
-  };
-
-  try {
-    const res = await fetch("/api/order/new", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+        container.appendChild(div);
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    totalPriceEl.textContent = `¥${total}`;
+}
 
-    if (data.success) {
-      localStorage.removeItem("cart");
-      window.location.href = `payment.html?orderId=${encodeURIComponent(
-        data.orderId
-      )}&table=${encodeURIComponent(tableNo)}`;
-    } else {
-      alert("❌ Order failed: " + (data.error || "Unknown error"));
+// ===============================
+// CHANGE QUANTITY
+// ===============================
+function changeQty(index, amount) {
+    cart[index].qty += amount;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+
+    // Recalculate subtotal
+    cart = cart.map((i) => ({
+        ...i,
+        subtotal: i.price * i.qty,
+    }));
+
+    saveCart();
+    renderCart();
+    updateCartButton();
+}
+
+// ===============================
+// REMOVE ITEM
+// ===============================
+function removeItem(index) {
+    cart.splice(index, 1);
+    saveCart();
+    renderCart();
+    updateCartButton();
+}
+
+// ===============================
+// CHECKOUT → SEND ORDER
+// ===============================
+async function checkout() {
+    const tableNo = localStorage.getItem("tableNo");
+
+    if (!tableNo) {
+        alert("Table number missing. Scan QR again.");
+        return;
     }
-  } catch (e) {
-    console.error("❌ Checkout error:", e);
-    alert("Error connecting to server or invalid JSON.");
-  } finally {
-    checkoutBtn.disabled = false;
-    checkoutBtn.textContent = "Checkout";
-  }
-});
 
-// ⬅ Back to menu
-backBtn.addEventListener("click", () => (window.location.href = "main.html"));
+    if (cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
 
-// Initialize
-renderCart();
+    const payload = {
+        tableNo: Number(tableNo),
+        items: cart.map((i) => ({
+            name: i.name,
+            price: i.price,
+            qty: i.qty,
+            size: i.size || null,
+            spice: i.spice || null,
+            juice: i.juice || null,
+            addons: i.addons || [],
+            subtotal: i.price * i.qty,
+            menu_id: i.menu_id || null
+        })),
+        total: cart.reduce((sum, i) => sum + i.price * i.qty, 0)
+    };
+
+    try {
+        const res = await fetch(
+            "https://vigilant-exploration-production.up.railway.app/api/order/new",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        const data = await res.json();
+
+        if (!data.success) {
+            alert("Order failed: " + data.error);
+            return;
+        }
+
+        // Success
+        localStorage.setItem("orderId", data.orderId);
+        cart = [];
+        saveCart();
+
+        window.location.href = "payment.html";
+    } catch (err) {
+        console.error("Checkout error:", err);
+        alert("Server error. Please try again.");
+    }
+}
+
+// Render if on cart page
+if (document.getElementById("cartItems")) {
+    renderCart();
+}
