@@ -1,5 +1,5 @@
 /**********************************************
- * SALES DASHBOARD — AUTH + FETCH HELPERS
+ * SALES DASHBOARD — HELPERS
  **********************************************/
 
 function getAuthHeaders() {
@@ -14,10 +14,6 @@ function requireLoginAgain() {
     window.location.href = "admin.html";
 }
 
-
-/**********************************************
- * GENERIC FETCH WRAPPER WITH ERROR HANDLING
- **********************************************/
 async function fetchJSON(url) {
     const res = await fetch(url, { headers: getAuthHeaders() });
 
@@ -31,13 +27,7 @@ async function fetchJSON(url) {
         return null;
     }
 
-    try {
-        return await res.json();
-    } catch (e) {
-        console.error("❌ JSON parse error:", e);
-        requireLoginAgain();
-        return null;
-    }
+    return res.json();
 }
 
 
@@ -46,31 +36,60 @@ async function fetchJSON(url) {
  **********************************************/
 async function loadDashboard() {
     try {
-        const daily = await fetchJSON("/api/analytics/daily");
-        const monthly = await fetchJSON("/api/analytics/monthly");
-        const top = await fetchJSON("/api/analytics/top-items");
+        // ---- TODAY'S SALES ----
+        const today = await fetchJSON("/api/analytics/sales/today");
 
-        if (!daily || !monthly || !top) {
-            console.warn("⚠️ Missing data from server");
-            return;
+        if (today) {
+            document.getElementById("today-sales").textContent =
+                "¥" + Number(today.total_sales || 0).toLocaleString();
+
+            document.getElementById("today-sessions").textContent =
+                `${today.sessions || 0} sessions, ${today.total_items || 0} items`;
         }
 
-        // DAILY REVENUE
-        document.getElementById("daily-total").textContent =
-            daily.total || 0;
+        // ---- WEEKDAY vs WEEKEND ----
+        const ww = await fetchJSON("/api/analytics/sales/weekday-weekend");
 
-        // MONTHLY REVENUE
-        document.getElementById("monthly-total").textContent =
-            monthly.total || 0;
+        if (ww) {
+            const weekday = ww.weekday || {};
+            const weekend = ww.weekend || {};
 
-        // TOP ITEMS
-        const topList = document.getElementById("top-items");
-        topList.innerHTML = top.map(item => `
-            <li>
-                <b>${item.name}</b>
-                — ${item.count} sold (¥${item.revenue})
-            </li>
-        `).join("");
+            document.getElementById("weekday-avg").textContent =
+                "¥" + Number(weekday.avg_receipt || 0).toFixed(0);
+
+            document.getElementById("weekday-total").textContent =
+                "Total: ¥" + Number(weekday.total_sales || 0).toLocaleString();
+
+            document.getElementById("weekend-avg").textContent =
+                "¥" + Number(weekend.avg_receipt || 0).toFixed(0);
+
+            document.getElementById("weekend-total").textContent =
+                "Total: ¥" + Number(weekend.total_sales || 0).toLocaleString();
+
+            let boost = 0;
+            if (weekday.avg_receipt > 0 && weekend.avg_receipt > 0) {
+                boost = ((weekend.avg_receipt - weekday.avg_receipt) / weekday.avg_receipt) * 100;
+            }
+            document.getElementById("weekend-boost").textContent = boost.toFixed(1) + "%";
+        }
+
+        // ---- TOP ITEMS TODAY ----
+        const topItems = await fetchJSON("/api/analytics/items/top-today");
+        const tbody = document.getElementById("top-items-body");
+
+        if (!Array.isArray(topItems) || topItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3">No data for today.</td></tr>`;
+        } else {
+            tbody.innerHTML = topItems
+                .map(i => `
+                    <tr>
+                        <td>${i.name}</td>
+                        <td>${i.total_qty}</td>
+                        <td>¥${Number(i.revenue).toFixed(0)}</td>
+                    </tr>
+                `)
+                .join("");
+        }
 
     } catch (err) {
         console.error("❌ dashboard error:", err);
