@@ -26,13 +26,6 @@
     }
     button:hover { opacity: 0.9; transform: translateY(-2px); }
 
-    #mute-btn {
-      background: #666;
-      color: white;
-      font-weight: 600;
-    }
-    #mute-btn.active { background: #cc0000; }
-
     table {
       width: 100%;
       color: whitesmoke;
@@ -72,7 +65,7 @@
 
   <div id="top-bar">
     <button id="refresh">🔄 Refresh Orders</button>
-     <button id="sales-btn">📈 Sales Dashboard</button>
+    <button id="sales-btn">📈 Sales Dashboard</button>
   </div>
 
   <table id="order-table">
@@ -89,7 +82,7 @@
     <tbody></tbody>
   </table>
 
-  <script>
+<script>
 
 /**********************************************
  * ALWAYS SHOW LOGIN POPUP FIRST
@@ -159,7 +152,7 @@ async function handleAdminLogin() {
 }
 
 /**********************************************
- * FETCH ORDERS
+ * AUTH HEADER
  **********************************************/
 function authHeaders() {
     return {
@@ -167,12 +160,15 @@ function authHeaders() {
     };
 }
 
+/**********************************************
+ * FETCH ORDERS  (FIXED)
+ **********************************************/
 async function loadOrders() {
     const tbody = document.querySelector("#order-table tbody");
 
     try {
-        // FIXED ROUTE (REAL ONE)
-        const res = await fetch("/api/order", { headers: authHeaders() });
+        // FIXED ROUTE — correct admin order list API
+        const res = await fetch("/api/order/list", { headers: authHeaders() });
 
         if (res.status === 401) {
             showAdminLogin();
@@ -190,10 +186,10 @@ async function loadOrders() {
             <tr>
                 <td>${o.id}</td>
                 <td>${o.table_no}</td>
-                <td>${o.total}</td>
+                <td>¥${o.total}</td>
                 <td>${o.status}</td>
-                <td>${o.created_at}</td>
-                <td><button>View</button></td>
+                <td>${new Date(o.created_at).toLocaleString()}</td>
+                <td><button data-id="${o.id}" class="view-btn">View</button></td>
             </tr>
         `).join("");
 
@@ -214,8 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sales) sales.onclick = () => window.location.href = "sales.html";
 });
 
-  </script>
-
-
+</script>
 </body>
 </html>
