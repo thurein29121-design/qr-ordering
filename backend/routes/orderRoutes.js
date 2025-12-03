@@ -133,7 +133,7 @@ router.post("/checkout/:table", async (req, res) => {
     const tableNo = req.params.table;
 
     const [orders] = await pool.query(
-      "SELECT * FROM orders WHERE table_no = ? AND status = 'pending'",
+      "SELECT * FROM orders WHERE table_no = ? AND status = 'received'",
       [tableNo]
     );
 
@@ -153,7 +153,7 @@ router.post("/checkout/:table", async (req, res) => {
       allItems.push(...items);
 
       await pool.query(
-        "UPDATE orders SET status = 'done', session_id = ? WHERE id = ?",
+        "UPDATE orders SET status = 'completed', session_id = ? WHERE id = ?",
         [sessionId, order.id]
       );
     }
