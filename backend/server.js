@@ -47,9 +47,19 @@ app.post("/api/admin/login", (req, res) => {
 });
 
 // ---- FRONTEND CATCH-ALL (must be last) ----
-app.get("*", (req, res) => {
+/*app.get("*", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
+});*/
+// Serve HTML files only
+const htmlFiles = ["main.html", "admin.html", "sales.html", "tables.html", "history.html", "cart.html", "payment.html"];
+
+app.get("/:page", (req, res, next) => {
+  if (htmlFiles.includes(req.params.page)) {
+    return res.sendFile(path.join(publicDir, req.params.page));
+  }
+  next();
 });
+
 
 // ---- START SERVER ----
 const PORT = process.env.PORT || 8080;
