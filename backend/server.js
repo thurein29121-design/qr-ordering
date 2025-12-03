@@ -19,14 +19,14 @@ app.use(express.json());
 app.get("/health", (req, res) => {
   res.json({ ok: true, message: "Server running" });
 });
-
+app.use("/api/order", orderRoutes);
 // ---- SERVE PUBLIC FRONTEND FILES ----
 const publicDir = path.join(__dirname, "public");
 app.use(express.static(publicDir));
 
 // ---- API ROUTES ----
 app.use("/api/menu", menuRoutes);
-app.use("/api/order", orderRoutes);
+
 app.use("/api/tables", tableRoutes);
 app.use("/api/admin/menu", requireAdmin, adminMenuRoutes);
 app.use("/api/analytics", requireAdmin, analyticsRoutes);
