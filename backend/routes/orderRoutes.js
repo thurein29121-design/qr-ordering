@@ -3,16 +3,14 @@ const router = express.Router();
 const pool = require("../db/connection");
 
 // ------------------------
-// CREATE NEW ORDER (FIXED)
+// CREATE NEW ORDER
 // ------------------------
 router.post("/new", async (req, res) => {
   try {
-    // Accept both tableNo (frontend) and table_no (fallback)
-    const table_no = req.body.tableNo || req.body.table_no;
+    const table_no = (req.body.tableNo || req.body.table_no || "").trim();
     const items = req.body.items || [];
     const total = Number(req.body.total || 0);
 
-    // Validate
     if (!table_no) {
       return res.status(400).json({ success: false, error: "Missing table_no" });
     }
@@ -20,7 +18,7 @@ router.post("/new", async (req, res) => {
       return res.status(400).json({ success: false, error: "No items provided" });
     }
 
-    // Insert new order
+    // Insert the order
     const [result] = await pool.query(
       "INSERT INTO orders (table_no, total, status) VALUES (?, ?, ?)",
       [table_no, total, "received"]
@@ -28,7 +26,7 @@ router.post("/new", async (req, res) => {
 
     const orderId = result.insertId;
 
-    // Insert all items
+    // Insert the order items
     for (const it of items) {
       await pool.query(
         `INSERT INTO order_items 
@@ -41,8 +39,8 @@ router.post("/new", async (req, res) => {
           it.qty,
           it.size || null,
           it.spice || null,
-          it.juice ? it.juice.name : null,
-          JSON.stringify(it.addons || []),
+          it.juice ? it.juice.name : null,     // DB now accepts NULL ✔
+          JSON.stringify(it.addons || []),     // always valid JSON ✔
           it.subtotal,
         ]
       );
@@ -76,6 +74,15 @@ router.get("/:id", async (req, res) => {
       [id]
     );
 
+    // Parse addons JSON
+    items.forEach(i => {
+      try {
+        if (typeof i.addons === "string") i.addons = JSON.parse(i.addons);
+      } catch {
+        i.addons = [];
+      }
+    });
+
     res.json({ order, items });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -88,10 +95,10 @@ router.get("/:id", async (req, res) => {
 // ------------------------
 router.get("/history/:table", async (req, res) => {
   try {
-    const tableNo = req.params.table;
+    const tableNo = String(req.params.table).trim();
 
     const [orders] = await pool.query(
-      "SELECT * FROM orders WHERE table_no = ? ORDER BY created_at DESC",
+      "SELECT * FROM orders WHERE TRIM(table_no) = ? ORDER BY created_at DESC",
       [tableNo]
     );
 
@@ -100,6 +107,16 @@ router.get("/history/:table", async (req, res) => {
         "SELECT * FROM order_items WHERE order_id = ?",
         [order.id]
       );
+
+      // Parse JSON addons
+      items.forEach(i => {
+        try {
+          if (typeof i.addons === "string") i.addons = JSON.parse(i.addons);
+        } catch {
+          i.addons = [];
+        }
+      });
+
       order.items = items;
     }
 
@@ -128,52 +145,50 @@ router.get("/list", async (req, res) => {
 // ------------------------
 // CHECKOUT TABLE (receipt)
 // ------------------------
-// ------------------------
-// CHECKOUT TABLE (receipt)
-// ------------------------
 router.post("/checkout/:table", async (req, res) => {
   try {
     const tableNo = String(req.params.table).trim();
 
-    // 1. Fetch all RECEIVED orders for this table
+    // 1. Get all active orders
     const [orders] = await pool.query(
       "SELECT * FROM orders WHERE TRIM(table_no) = ? AND status = 'received'",
       [tableNo]
     );
 
     if (!orders.length) {
-      return res.json({ success: false, message: "No orders found" });
+      return res.json({ success: false, message: "No active orders" });
     }
 
     const sessionId = Date.now();
     let allItems = [];
 
     for (const order of orders) {
-      // 2. Fetch items
       const [items] = await pool.query(
         "SELECT * FROM order_items WHERE order_id = ?",
         [order.id]
       );
 
-      // Parse JSON addons if needed
-      items.forEach(it => {
+      // parse addons JSON
+      items.forEach(i => {
         try {
-          if (typeof it.addons === "string") {
-            it.addons = JSON.parse(it.addons);
-          }
-        } catch { it.addons = []; }
+          if (typeof i.addons === "string") i.addons = JSON.parse(i.addons);
+        } catch {
+          i.addons = [];
+        }
       });
 
       allItems.push(...items);
 
-      // 3. Update orders to completed
-      await pool.query(
-        "UPDATE orders SET status = 'completed', session_id = ? WHERE id = ?",
-        [sessionId, order.id]
-      );
+      // 2. Update status → completed
+      if (order.id) {
+        await pool.query(
+          "UPDATE orders SET status = 'completed', session_id = ? WHERE id = ?",
+          [sessionId, order.id]
+        );
+      }
     }
 
-    return res.json({
+    res.json({
       success: true,
       table_no: tableNo,
       session_id: sessionId,
@@ -181,10 +196,9 @@ router.post("/checkout/:table", async (req, res) => {
     });
 
   } catch (e) {
-    console.error("CHECKOUT ERROR:", e);
+    console.error("❌ CHECKOUT ERROR:", e);
     res.status(500).json({ error: e.message });
   }
 });
-
 
 module.exports = router;
