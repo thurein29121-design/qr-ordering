@@ -3,32 +3,44 @@ const router = express.Router();
 const pool = require("../db/connection");
 
 // ------------------------
-// CREATE NEW ORDER
+// CREATE NEW ORDER (FIXED)
 // ------------------------
 router.post("/new", async (req, res) => {
   try {
-    const { tableNo, items, total } = req.body;
+    // Accept both tableNo (frontend) and table_no (fallback)
+    const table_no = req.body.tableNo || req.body.table_no;
+    const items = req.body.items || [];
+    const total = Number(req.body.total || 0);
 
+    // Validate
+    if (!table_no) {
+      return res.status(400).json({ success: false, error: "Missing table_no" });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, error: "No items provided" });
+    }
+
+    // Insert new order
     const [result] = await pool.query(
       "INSERT INTO orders (table_no, total, status) VALUES (?, ?, ?)",
-      [tableNo, total, "pending"]
+      [table_no, total, "pending"]
     );
 
     const orderId = result.insertId;
 
-    // insert items
+    // Insert all items
     for (const it of items) {
       await pool.query(
         `INSERT INTO order_items 
-         (order_id, name, price, qty, size, spice, juice, addons, subtotal)
+          (order_id, name, price, qty, size, spice, juice, addons, subtotal)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           it.name,
           it.price,
           it.qty,
-          it.size,
-          it.spice,
+          it.size || null,
+          it.spice || null,
           it.juice ? it.juice.name : null,
           JSON.stringify(it.addons || []),
           it.subtotal,
@@ -36,12 +48,14 @@ router.post("/new", async (req, res) => {
       );
     }
 
-    res.json({ success: true, orderId });
+    return res.json({ success: true, orderId });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("❌ /api/order/new ERROR:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 // ------------------------
 // GET ORDER BY ID
@@ -67,6 +81,7 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ------------------------
 // ORDER HISTORY BY TABLE
@@ -94,6 +109,7 @@ router.get("/history/:table", async (req, res) => {
   }
 });
 
+
 // ------------------------
 // ADMIN GET ALL ORDERS
 // ------------------------
@@ -108,6 +124,7 @@ router.get("/list", async (req, res) => {
   }
 });
 
+
 // ------------------------
 // CHECKOUT TABLE (receipt)
 // ------------------------
@@ -115,7 +132,6 @@ router.post("/checkout/:table", async (req, res) => {
   try {
     const tableNo = req.params.table;
 
-    // get all current orders
     const [orders] = await pool.query(
       "SELECT * FROM orders WHERE table_no = ? AND status = 'pending'",
       [tableNo]
@@ -125,8 +141,7 @@ router.post("/checkout/:table", async (req, res) => {
       return res.json({ success: false });
     }
 
-    let sessionId = Date.now();
-
+    const sessionId = Date.now();
     let allItems = [];
 
     for (const order of orders) {
@@ -134,6 +149,7 @@ router.post("/checkout/:table", async (req, res) => {
         "SELECT * FROM order_items WHERE order_id = ?",
         [order.id]
       );
+
       allItems.push(...items);
 
       await pool.query(
@@ -148,6 +164,7 @@ router.post("/checkout/:table", async (req, res) => {
       session_id: sessionId,
       items: allItems,
     });
+
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
