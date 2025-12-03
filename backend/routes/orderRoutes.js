@@ -128,37 +128,52 @@ router.get("/list", async (req, res) => {
 // ------------------------
 // CHECKOUT TABLE (receipt)
 // ------------------------
+// ------------------------
+// CHECKOUT TABLE (receipt)
+// ------------------------
 router.post("/checkout/:table", async (req, res) => {
   try {
-    const tableNo = req.params.table;
+    const tableNo = String(req.params.table).trim();
 
+    // 1. Fetch all RECEIVED orders for this table
     const [orders] = await pool.query(
-      "SELECT * FROM orders WHERE table_no = ? AND status = 'received'",
+      "SELECT * FROM orders WHERE TRIM(table_no) = ? AND status = 'received'",
       [tableNo]
     );
 
     if (!orders.length) {
-      return res.json({ success: false });
+      return res.json({ success: false, message: "No orders found" });
     }
 
     const sessionId = Date.now();
     let allItems = [];
 
     for (const order of orders) {
+      // 2. Fetch items
       const [items] = await pool.query(
         "SELECT * FROM order_items WHERE order_id = ?",
         [order.id]
       );
 
+      // Parse JSON addons if needed
+      items.forEach(it => {
+        try {
+          if (typeof it.addons === "string") {
+            it.addons = JSON.parse(it.addons);
+          }
+        } catch { it.addons = []; }
+      });
+
       allItems.push(...items);
 
+      // 3. Update orders to completed
       await pool.query(
         "UPDATE orders SET status = 'completed', session_id = ? WHERE id = ?",
         [sessionId, order.id]
       );
     }
 
-    res.json({
+    return res.json({
       success: true,
       table_no: tableNo,
       session_id: sessionId,
@@ -166,8 +181,10 @@ router.post("/checkout/:table", async (req, res) => {
     });
 
   } catch (e) {
+    console.error("CHECKOUT ERROR:", e);
     res.status(500).json({ error: e.message });
   }
 });
+
 
 module.exports = router;
