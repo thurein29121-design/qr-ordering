@@ -23,7 +23,7 @@ router.post("/new", async (req, res) => {
     // Insert new order
     const [result] = await pool.query(
       "INSERT INTO orders (table_no, total, status) VALUES (?, ?, ?)",
-      [table_no, total, "receive"]
+      [table_no, total, "received"]
     );
 
     const orderId = result.insertId;
