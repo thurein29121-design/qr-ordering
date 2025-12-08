@@ -94,51 +94,35 @@ router.get("/:id", async (req, res) => {
 // ORDER HISTORY BY TABLE
 // ------------------------
 router.get("/history/:table", async (req, res) => {
-  try {
-    const tableNo = String(req.params.table).trim();
+    const table = req.params.table;
+    const session = req.query.session;
 
     const [orders] = await pool.query(
-      "SELECT * FROM orders WHERE TRIM(table_no) = ? ORDER BY created_at DESC",
-      [tableNo]
+        "SELECT * FROM orders WHERE table_no = ? AND session_id = ? ORDER BY created_at DESC",
+        [table, session]
     );
 
     for (const order of orders) {
-      const [items] = await pool.query(
-        "SELECT * FROM order_items WHERE order_id = ?",
-        [order.id]
-      );
-
-      // Parse JSON addons
-      items.forEach(i => {
-        try {
-          if (typeof i.addons === "string") i.addons = JSON.parse(i.addons);
-        } catch {
-          i.addons = [];
-        }
-      });
-
-      order.items = items;
+        const [items] = await pool.query(
+            "SELECT * FROM order_items WHERE order_id = ?",
+            [order.id]
+        );
+        order.items = items;
     }
 
     res.json(orders);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
+
 
 
 // ------------------------
 // ADMIN GET ALL ORDERS
 // ------------------------
-router.get("/list", async (req, res) => {
-  try {
-    const [data] = await pool.query(
-      "SELECT * FROM orders ORDER BY created_at DESC"
-    );
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+const { requireAdmin } = require("../middleware/auth");
+
+router.get("/list", requireAdmin, async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
+    res.json(rows);
 });
 
 

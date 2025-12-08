@@ -26,7 +26,6 @@ app.use(express.static(publicDir));
 
 // ---- API ROUTES ----
 app.use("/api/menu", menuRoutes);
-
 app.use("/api/tables", tableRoutes);
 app.use("/api/admin/menu", requireAdmin, adminMenuRoutes);
 app.use("/api/analytics", requireAdmin, analyticsRoutes);

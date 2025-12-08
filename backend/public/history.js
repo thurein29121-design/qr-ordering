@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loading = document.getElementById("loading");
 
   try {
-    const res = await fetch(`/api/order/history/${tableNo}`);
+   const session = localStorage.getItem("tasteqr_session");
+  const res = await fetch(`/api/order/history/${tableNo}?session=${session}`);
+
     const orders = await res.json();
 
     if (!Array.isArray(orders) || orders.length === 0) {
