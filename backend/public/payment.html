@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!orderId) return;
 
   try {
-    const res = await fetch(`/api/order/${orderId}`);
+    const res = await fetch(`/api/order/view/${orderId}`);
     const data = await res.json();
 
     if (!res.ok || !data.order) {
