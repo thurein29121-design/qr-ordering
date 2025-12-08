@@ -38,16 +38,35 @@ router.get("/:tableNo/status", async (req, res) => {
 });
 
 // CHANGE TABLE STATE (0=closed, 1=open)
-router.put("/:table/state", async (req, res) => {
-  const table = req.params.table;
+router.put("/:tableNo/state", async (req, res) => {
+  const { tableNo } = req.params;
   const { state } = req.body;
+  const s = Number(state);
 
-  await pool.query(
-    "UPDATE tables SET is_active = ? WHERE table_no = ?",
-    [state, table]
-  );
+  if (![0, 1].includes(s)) {
+    return res.status(400).json({ success: false, error: "Invalid state" });
+  }
 
-  res.json({ success: true });
+  try {
+    if (s === 0) {
+      // 🔴 Close table & prepare NEW session for next customers
+      await pool.query(
+        "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
+        [tableNo]
+      );
+    } else if (s === 1) {
+      // 🟢 Open table (customers can order, use current session_id)
+      await pool.query(
+        "UPDATE tables SET is_active = 1 WHERE table_no = ?",
+        [tableNo]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to set table state:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 module.exports = router;
