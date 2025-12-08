@@ -4,20 +4,37 @@ const pool = require("../db/connection");
 
 // GET ALL TABLES
 router.get("/", async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM tables");
-  res.json(rows);
+  try {
+    const [rows] = await pool.query("SELECT * FROM tables");
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Failed to load tables:", err);
+    res.status(500).json({ error: "Failed to load tables" });
+  }
 });
 
 // CHECK TABLE STATUS
-router.get("/:table/status", async (req, res) => {
-  const table = req.params.table;
+router.get("/:tableNo/status", async (req, res) => {
+  const { tableNo } = req.params;
 
-  const [[row]] = await pool.query(
-    "SELECT is_active FROM tables WHERE table_no = ?",
-    [table]
-  );
+  try {
+    const [rows] = await pool.query(
+      "SELECT is_active, session_id FROM tables WHERE table_no = ?",
+      [tableNo]
+    );
+    if (!rows.length) return res.status(404).json({ active: false });
 
-  res.json({ active: row?.is_active === 1 });
+    const isActive = rows[0].is_active === 1; // 1 = GREEN/open
+
+    res.json({
+      active: isActive,
+      is_active: rows[0].is_active,
+      session_id: rows[0].session_id,
+    });
+  } catch (err) {
+    console.error("❌ Failed to fetch table status:", err);
+    res.status(500).json({ active: false });
+  }
 });
 
 // CHANGE TABLE STATE (0=closed, 1=open)
