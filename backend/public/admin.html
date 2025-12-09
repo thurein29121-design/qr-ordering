@@ -217,7 +217,7 @@ function attachViewButtons() {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
       try {
-        const res = await fetch(`/api/order/${id}`, { headers: authHeaders() });
+        const res = await fetch(`/api/order/view/${id}`, { headers: authHeaders() });
         const data = await res.json();
         if (!data.order) return alert("Order not found");
 
