@@ -193,6 +193,8 @@ async function loadOrders() {
             </tr>
         `).join("");
 
+        
+attachViewButtons();
     } catch (err) {
         console.error(err);
         tbody.innerHTML = "<tr><td colspan='6'>Server error.</td></tr>";
@@ -209,6 +211,42 @@ document.addEventListener("DOMContentLoaded", () => {
     const sales = document.getElementById("sales-btn");
     if (sales) sales.onclick = () => window.location.href = "sales.html";
 });
+
+function attachViewButtons() {
+  document.querySelectorAll(".view-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      try {
+        const res = await fetch(`/api/order/${id}`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!data.order) return alert("Order not found");
+
+        const itemsText = data.items.map(i => {
+          let addons = [];
+          try { addons = i.addons ? JSON.parse(i.addons) : []; } catch {}
+
+          const details = [
+            i.size ? `Size: ${i.size}` : "",
+            i.spice ? `Spice: ${i.spice}` : "",
+            i.juice ? `Juice: ${i.juice}` : "",
+            addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : ""
+          ]
+          .filter(Boolean)
+          .join(", ");
+
+          return `${i.name} (${details}) × ${i.qty} = ¥${i.subtotal}`;
+        }).join("\n");
+
+        alert(
+          `Order #${id}\nTable: ${data.order.table_no}\nStatus: ${data.order.status}\nTotal: ¥${data.order.total}\n\nItems:\n${itemsText}`
+        );
+      } catch (e) {
+        console.error("❌ Failed to view order:", e);
+      }
+    });
+  });
+}
+
 
 </script>
 </body>
