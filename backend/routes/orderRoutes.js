@@ -241,4 +241,34 @@ router.post("/checkout/:tableNo", async (req, res) => {
   }
 });
 
+
+// GET /api/order/:id → return order + items
+router.get("/:id", async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const [orderRows] = await pool.query(
+      "SELECT * FROM orders WHERE id = ?",
+      [id]
+    );
+
+    if (orderRows.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const order = orderRows[0];
+
+    const [items] = await pool.query(
+      "SELECT * FROM order_items WHERE order_id = ?",
+      [id]
+    );
+
+    res.json({ order, items });
+  } catch (err) {
+    console.error("❌ Error fetching order:", err);
+    res.status(500).json({ error: "Server error loading order" });
+  }
+});
+
+
 module.exports = router;
