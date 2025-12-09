@@ -242,7 +242,7 @@ footer{
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: transparent;
+  background: linear-gradient(135deg, #6b4e3d, #8e5b3f);
   color: #fff;
   border: none;
   border-radius: 50px;
@@ -256,7 +256,7 @@ footer{
   gap: 15px;
   z-index: 1000;
   transition: all 0.25s;
-  background: linear-gradient(135deg, #eff2f1, #1d9366);
+  background: transparent;
 }
 
 .cart-float:hover {
