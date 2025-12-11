@@ -6,6 +6,7 @@
     return;
   }
 
+  
   try {
     const res = await fetch(`/api/tables/${tableNo}/status`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
