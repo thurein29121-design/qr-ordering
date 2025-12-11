@@ -24,13 +24,13 @@ body {
 
 /* Banner */
 #banner {
-  position: fixed;
+  position: relative;
   height: 120px;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  background: linear-gradient(90deg, #121b1f, #22d3ee);
+  background: linear-gradient(90deg, #385143, #22d3ee);
   color: #fff;
 }
 
@@ -128,7 +128,7 @@ body {
   position: fixed;
   gap: 10px;
   padding: 10px 12px;
-  background: #26394c;
+  background: transparent;
   border-bottom: 1px solid #e5e7eb;
   overflow-x: auto;
   color: whitesmoke;
