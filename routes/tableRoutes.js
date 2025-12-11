@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { pool } = require("../db/connection");
+const db = require("../db/connection");
 
 // GET ALL TABLES
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM tables");
+    const [rows] = await db.query("SELECT * FROM tables");
     res.json(rows); // ✅ ARRAY
   } catch (err) {
     console.error("❌ Failed to load tables:", err);
@@ -18,7 +18,7 @@ router.get("/:tableNo/status", async (req, res) => {
   const { tableNo } = req.params;
 
   try {
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       "SELECT is_active, session_id FROM tables WHERE table_no = ?",
       [tableNo]
     );
@@ -47,12 +47,12 @@ router.put("/:tableNo/state", async (req, res) => {
 
   try {
     if (s === 0) {
-      await pool.query(
+      await db.query(
         "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
         [tableNo]
       );
     } else {
-      await pool.query(
+      await db.query(
         "UPDATE tables SET is_active = 1 WHERE table_no = ?",
         [tableNo]
       );

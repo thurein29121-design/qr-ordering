@@ -1,14 +1,14 @@
 // backend/routes/analyticsRoutes.js
 const express = require("express");
 const router = express.Router();
-const pool = require("../db/connection");
+const db = require("../db/connection");
 
 /************************************************
  * 1) TODAY'S SALES
  ************************************************/
 router.get("/sales/today", async (req, res) => {
   try {
-    const [[row]] = await pool.query(`
+    const [[row]] = await db.query(`
       SELECT
         COALESCE(SUM(total), 0) AS total_sales,
         COUNT(*) AS sessions,
@@ -32,7 +32,7 @@ router.get("/sales/today", async (req, res) => {
  ************************************************/
 router.get("/sales/weekday-weekend", async (req, res) => {
   try {
-    const [weekday] = await pool.query(`
+    const [weekday] = await db.query(`
       SELECT 
         AVG(total) AS avg_receipt,
         SUM(total) AS total_sales
@@ -40,7 +40,7 @@ router.get("/sales/weekday-weekend", async (req, res) => {
       WHERE WEEKDAY(created_at) < 5
     `);
 
-    const [weekend] = await pool.query(`
+    const [weekend] = await db.query(`
       SELECT 
         AVG(total) AS avg_receipt,
         SUM(total) AS total_sales
@@ -64,7 +64,7 @@ router.get("/sales/weekday-weekend", async (req, res) => {
  ************************************************/
 router.get("/items/top-today", async (req, res) => {
   try {
-    const [rows] = await pool.query(`
+    const [rows] = await db.query(`
       SELECT 
         oi.name,
         SUM(oi.qty) AS total_qty,

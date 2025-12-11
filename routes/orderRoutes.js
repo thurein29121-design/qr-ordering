@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db/connection");
+const db = require("../db/connection");
 const { requireAdmin } = require("../middleware/auth");
 
 // ============================================================
@@ -20,7 +20,7 @@ router.post("/new", async (req, res) => {
     }
 
     // 🔹 Get ACTIVE session_id from tables
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       "SELECT session_id FROM tables WHERE table_no = ?",
       [tableNo]
     );
@@ -28,7 +28,7 @@ router.post("/new", async (req, res) => {
     const sessionId = rows.length ? rows[0].session_id : 1;
 
     // 🔹 Insert MAIN order
-    const [result] = await pool.query(
+    const [result] = await db.query(
       "INSERT INTO orders (table_no, total, status, session_id, created_at) VALUES (?, ?, 'received', ?, NOW())",
       [tableNo, total, sessionId]
     );
@@ -37,7 +37,7 @@ router.post("/new", async (req, res) => {
 
     // 🔹 Insert ITEMS with correct field order (same as working local version)
     for (const it of items) {
-      await pool.query(
+      await db.query(
         `INSERT INTO order_items 
         (order_id, name, price, qty, subtotal, size, spice, addons, juice)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -71,14 +71,14 @@ router.get("/view/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    const [[order]] = await pool.query(
+    const [[order]] = await db.query(
       "SELECT * FROM orders WHERE id = ?",
       [orderId]
     );
 
     if (!order) return res.status(404).json({ success: false, error: "Order not found" });
 
-    const [items] = await pool.query(
+    const [items] = await db.query(
       "SELECT * FROM order_items WHERE order_id = ?",
       [orderId]
     );
@@ -108,7 +108,7 @@ router.get("/history/:tableNo", async (req, res) => {
   const { tableNo } = req.params;
 
   try {
-    const [sessionRows] = await pool.query(
+    const [sessionRows] = await db.query(
       "SELECT session_id FROM tables WHERE table_no = ?",
       [tableNo]
     );
@@ -119,13 +119,13 @@ router.get("/history/:tableNo", async (req, res) => {
 
     const sessionId = sessionRows[0].session_id;
 
-    const [orders] = await pool.query(
+    const [orders] = await db.query(
       "SELECT * FROM orders WHERE table_no = ? AND session_id = ? ORDER BY created_at DESC",
       [tableNo, sessionId]
     );
 
     for (const order of orders) {
-      const [items] = await pool.query(
+      const [items] = await db.query(
         "SELECT * FROM order_items WHERE order_id = ?",
         [order.id]
       );
@@ -155,7 +155,7 @@ router.get("/history/:tableNo", async (req, res) => {
 // ============================================================
 router.get("/list", requireAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM orders ORDER BY created_at DESC");
+    const [rows] = await db.query("SELECT * FROM orders ORDER BY created_at DESC");
     res.json(rows);
   } catch (err) {
     console.error("❌ ADMIN LIST ERROR:", err);
@@ -172,7 +172,7 @@ router.post("/checkout/:tableNo", async (req, res) => {
     const tableNo = req.params.tableNo;
 
     // 1. Get session_id
-    const [tableRows] = await pool.query(
+    const [tableRows] = await db.query(
       "SELECT session_id FROM tables WHERE table_no = ?",
       [tableNo]
     );
@@ -184,7 +184,7 @@ router.post("/checkout/:tableNo", async (req, res) => {
     const sessionId = tableRows[0].session_id;
 
     // 2. Get orders in this session
-    const [orders] = await pool.query(
+    const [orders] = await db.query(
       "SELECT id FROM orders WHERE table_no = ? AND session_id = ?",
       [tableNo, sessionId]
     );
@@ -199,7 +199,7 @@ router.post("/checkout/:tableNo", async (req, res) => {
 
     // 3. Expand items
     for (const order of orders) {
-      const [orderItems] = await pool.query(
+      const [orderItems] = await db.query(
         "SELECT * FROM order_items WHERE order_id = ?",
         [order.id]
       );
@@ -247,7 +247,7 @@ router.get("/:id", async (req, res) => {
   const id = req.params.id;
 
   try {
-    const [orderRows] = await pool.query(
+    const [orderRows] = await db.query(
       "SELECT * FROM orders WHERE id = ?",
       [id]
     );
@@ -258,7 +258,7 @@ router.get("/:id", async (req, res) => {
 
     const order = orderRows[0];
 
-    const [items] = await pool.query(
+    const [items] = await db.query(
       "SELECT * FROM order_items WHERE order_id = ?",
       [id]
     );
