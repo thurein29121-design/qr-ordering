@@ -24,7 +24,7 @@ body {
 
 /* Banner */
 #banner {
-  position: relative;
+  position: fixed;
   height: 120px;
   display: flex;
   align-items: center;
