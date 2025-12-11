@@ -125,6 +125,7 @@ body {
 /* Nav */
 #nav1 {
   display: flex;
+  position: fixed;
   gap: 10px;
   padding: 10px 12px;
   background: #26394c;
