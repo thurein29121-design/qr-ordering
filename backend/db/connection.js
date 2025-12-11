@@ -1,4 +1,3 @@
-// backend/db/connection.js
 const mysql = require("mysql2/promise");
 require("dotenv").config();
 
@@ -8,14 +7,11 @@ const pool = mysql.createPool({
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
   port: Number(process.env.MYSQLPORT) || 3306,
-  ssl: {
-    rejectUnauthorized: false
-  },
+  ssl: false,               // ✅ FIX HERE
   connectionLimit: 10
 });
 
-// Simple startup test
-(async () => {
+async function testConnection() {
   try {
     const conn = await pool.getConnection();
     console.log("🟢 Connected to MySQL");
@@ -23,6 +19,9 @@ const pool = mysql.createPool({
   } catch (err) {
     console.error("❌ MySQL connection failed:", err.message);
   }
-})();
+}
 
-module.exports = pool;
+module.exports = {
+  pool,
+  testConnection
+};

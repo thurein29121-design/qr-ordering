@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db/connection");
+const { pool } = require("../db/connection");
 
 // GET ALL TABLES
 router.get("/", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM tables");
-    res.json(rows);
+    res.json(rows); // ✅ ARRAY
   } catch (err) {
     console.error("❌ Failed to load tables:", err);
     res.status(500).json({ error: "Failed to load tables" });
@@ -24,12 +24,10 @@ router.get("/:tableNo/status", async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ active: false });
 
-    const isActive = rows[0].is_active === 1; // 1 = GREEN/open
-
     res.json({
-      active: isActive,
+      active: rows[0].is_active === 1,
       is_active: rows[0].is_active,
-      session_id: rows[0].session_id,
+      session_id: rows[0].session_id
     });
   } catch (err) {
     console.error("❌ Failed to fetch table status:", err);
@@ -37,25 +35,23 @@ router.get("/:tableNo/status", async (req, res) => {
   }
 });
 
-// CHANGE TABLE STATE (0=closed, 1=open)
+// CHANGE TABLE STATE
 router.put("/:tableNo/state", async (req, res) => {
   const { tableNo } = req.params;
   const { state } = req.body;
   const s = Number(state);
 
   if (![0, 1].includes(s)) {
-    return res.status(400).json({ success: false, error: "Invalid state" });
+    return res.status(400).json({ success: false });
   }
 
   try {
     if (s === 0) {
-      // 🔴 Close table & prepare NEW session for next customers
       await pool.query(
         "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
         [tableNo]
       );
-    } else if (s === 1) {
-      // 🟢 Open table (customers can order, use current session_id)
+    } else {
       await pool.query(
         "UPDATE tables SET is_active = 1 WHERE table_no = ?",
         [tableNo]
@@ -65,7 +61,7 @@ router.put("/:tableNo/state", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Failed to set table state:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false });
   }
 });
 

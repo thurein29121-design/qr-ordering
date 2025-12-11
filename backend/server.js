@@ -8,7 +8,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const tableRoutes = require("./routes/tableRoutes");
 const adminMenuRoutes = require("./routes/adminMenuRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
-const pool = require("./db/connection");
+const { testConnection } = require("./db/connection");
 const { generateAdminToken, requireAdmin } = require("./middleware/auth");
 
 const app = express();
@@ -62,6 +62,8 @@ app.get("/:page", (req, res, next) => {
 
 // ---- START SERVER ----
 const PORT = process.env.PORT || 8080;
+testConnection();
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
