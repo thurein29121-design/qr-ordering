@@ -265,6 +265,9 @@ let selectedAddons = [];
 // =====================
 function openCustomizePopup(item) {
   document.getElementById("popup-image").src = item.image;
+  document.querySelector(".popup-content").scrollTop = 0;
+  document.getElementById("popup-back").onclick = resetCustomizePopup;
+
 
   selectedItem = item;
   selectedSize = null;
