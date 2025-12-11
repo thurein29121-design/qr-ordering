@@ -351,7 +351,13 @@ function openCustomizePopup(item) {
   ===========================*/
   if (item.juice_options && Array.isArray(item.juice_options)) {
     juiceDiv.style.display = "block";
-    juiceDiv.innerHTML = "<h4>Choose Juice</h4>";
+juiceDiv.innerHTML = `
+  <h4>
+    Choose Juice 
+    <span style="color:red;">required</span>
+  </h4>
+`;
+
 
     const grid = document.createElement("div");
     grid.className = "juice-grid";
