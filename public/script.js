@@ -1,4 +1,19 @@
 // ===================== Verify table status first =====================
+// FIX GHOST POPUP ON BACK-NAVIGATION
+window.addEventListener("pageshow", () => {
+  const popup = document.getElementById("customize-popup");
+  if (popup) {
+    popup.style.display = "none";   // close the modal
+    popup.classList.remove("open"); // extra safety if CSS uses classes
+  }
+
+  // reset previous item state
+  selectedItem = null;
+  selectedSize = null;
+  selectedSpice = null;
+  selectedJuice = null;
+  selectedAddons = [];
+});
 
 (async () => {
   const tableNo = localStorage.getItem("tasteqr_table");
