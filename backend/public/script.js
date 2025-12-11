@@ -264,6 +264,8 @@ let selectedAddons = [];
 // OPEN POPUP
 // =====================
 function openCustomizePopup(item) {
+  document.getElementById("popup-image").src = item.image;
+
   selectedItem = item;
   selectedSize = null;
   selectedSpice = null;
@@ -442,6 +444,8 @@ function openCustomizePopup(item) {
   });
 
   // show popup
+  document.getElementById("popup-back").onclick = resetCustomizePopup;
+
   document.getElementById("customize-popup").style.display = "flex";
 }
 
