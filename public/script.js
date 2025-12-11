@@ -354,7 +354,7 @@ function openCustomizePopup(item) {
 juiceDiv.innerHTML = `
   <h4>
     Choose Juice 
-    <span style="color:red;">required</span>
+    <span style="color:red;">(required)</span>
   </h4>
 `;
 
@@ -491,7 +491,12 @@ function resetCustomizePopup() {
 // =====================
 document.getElementById("confirm-add").onclick = () => {
   if (!selectedItem) return;
-
+  if (selectedItem.category === "Set") {
+    if (!selectedJuice || !selectedJuice.name) {
+      alert("Please choose a juice before adding to cart.");
+      return;  // ❌ block add-to-cart
+    }
+  }
   const basePrice = Number(selectedItem.price) || 0;
   const sizeLabel = selectedSize?.size || null;
   const sizeExtra = Number(selectedSize?.extra || 0);
