@@ -1,4 +1,5 @@
 // ===================== Verify table status first =====================
+
 (async () => {
   const tableNo = localStorage.getItem("tasteqr_table");
   if (!tableNo) {
