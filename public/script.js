@@ -1,5 +1,7 @@
 // ===================== Verify table status first =====================
 // FIX GHOST POPUP ON BACK-NAVIGATION
+document.getElementById("customize-popup").style.display = "none";
+
 window.addEventListener("pageshow", () => {
   const popup = document.getElementById("customize-popup");
   if (popup) {
