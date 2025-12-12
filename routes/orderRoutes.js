@@ -3,7 +3,145 @@ const router = express.Router();
 const db = require("../db/connection");
 
 // ============================================================
-// 1️⃣ CREATE NEW ORDER (Customer Checkout)
+// 1️⃣ STAFF CHECK — GET ALL ITEMS FOR A TABLE (current session)
+// ============================================================
+router.get("/table-items/:tableNo", async (req, res) => {
+    const { tableNo } = req.params;
+
+    try {
+        const [[t]] = await db.query(
+            "SELECT session_id FROM tables WHERE table_no = ?",
+            [tableNo]
+        );
+        if (!t) {
+            return res.json({ success: true, items: [], total_items: 0, total_price: 0 });
+        }
+
+        const sessionId = t.session_id;
+
+        const [orders] = await db.query(
+            "SELECT id FROM orders WHERE table_no = ? AND session_id = ?",
+            [tableNo, sessionId]
+        );
+
+        if (!orders.length) {
+            return res.json({ success: true, items: [], total_items: 0, total_price: 0 });
+        }
+
+        const orderIds = orders.map(o => o.id);
+        const placeholders = orderIds.map(() => "?").join(",");
+
+        const [rows] = await db.query(
+            `SELECT * FROM order_items WHERE order_id IN (${placeholders}) ORDER BY id ASC`,
+            orderIds
+        );
+
+        let totalItems = 0;
+        let totalPrice = 0;
+
+        const items = rows.map(r => {
+            let addons = [];
+            try { addons = r.addons ? JSON.parse(r.addons) : []; } catch {}
+
+            totalItems += Number(r.qty);
+            totalPrice += Number(r.subtotal);
+
+            return { ...r, addons };
+        });
+
+        res.json({
+            success: true,
+            items,
+            total_items: totalItems,
+            total_price: totalPrice
+        });
+
+    } catch (err) {
+        console.error("❌ table-items ERROR:", err);
+        res.status(500).json({ success: false });
+    }
+});
+
+// ============================================================
+// 2️⃣ UPDATE ITEM QTY
+// ============================================================
+router.put("/item/:id", async (req, res) => {
+    const { id } = req.params;
+    const { qty } = req.body;
+
+    try {
+        const [[item]] = await db.query(
+            "SELECT order_id, qty, subtotal FROM order_items WHERE id = ?",
+            [id]
+        );
+        if (!item) return res.status(404).json({ success: false });
+
+        const unit = item.subtotal / item.qty;
+        const newSubtotal = unit * qty;
+
+        await db.query(
+            "UPDATE order_items SET qty = ?, subtotal = ? WHERE id = ?",
+            [qty, newSubtotal, id]
+        );
+
+        const [[sum]] = await db.query(
+            "SELECT SUM(subtotal) AS total FROM order_items WHERE order_id = ?",
+            [item.order_id]
+        );
+
+        await db.query("UPDATE orders SET total = ? WHERE id = ?", [
+            sum.total,
+            item.order_id
+        ]);
+
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error("❌ update qty ERROR:", err);
+        res.status(500).json({ success: false });
+    }
+});
+
+// ============================================================
+// 3️⃣ DELETE ITEM
+// ============================================================
+router.delete("/item/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [[item]] = await db.query(
+            "SELECT order_id FROM order_items WHERE id = ?",
+            [id]
+        );
+        if (!item) return res.status(404).json({ success: false });
+
+        await db.query("DELETE FROM order_items WHERE id = ?", [id]);
+
+        const [[sum]] = await db.query(
+            "SELECT SUM(subtotal) AS total, COUNT(*) AS cnt 
+             FROM order_items WHERE order_id = ?",
+            [item.order_id]
+        );
+
+        if (!sum.cnt) {
+            await db.query("DELETE FROM orders WHERE id = ?", [item.order_id]);
+        } else {
+            await db.query("UPDATE orders SET total = ? WHERE id = ?", [
+                sum.total,
+                item.order_id
+            ]);
+        }
+
+        res.json({ success: true });
+
+    } catch (err) {
+        console.error("❌ delete item ERROR:", err);
+        res.status(500).json({ success: false });
+    }
+});
+
+// ============================================================
+// 4️⃣ CREATE NEW ORDER (Customer Checkout)
 // ============================================================
 router.post("/new", async (req, res) => {
   try {
@@ -18,7 +156,6 @@ router.post("/new", async (req, res) => {
       return res.status(400).json({ success: false, error: "No items provided" });
     }
 
-    // 🔹 Get ACTIVE session_id from tables
     const [rows] = await db.query(
       "SELECT session_id FROM tables WHERE table_no = ?",
       [tableNo]
@@ -26,15 +163,14 @@ router.post("/new", async (req, res) => {
 
     const sessionId = rows.length ? rows[0].session_id : 1;
 
-    // 🔹 Insert MAIN order
     const [result] = await db.query(
-      "INSERT INTO orders (table_no, total, status, session_id, created_at) VALUES (?, ?, 'received', ?, NOW())",
+      "INSERT INTO orders (table_no, total, status, session_id, created_at) 
+       VALUES (?, ?, 'received', ?, NOW())",
       [tableNo, total, sessionId]
     );
 
     const orderId = result.insertId;
 
-    // 🔹 Insert ITEMS with correct field order (same as working local version)
     for (const it of items) {
       await db.query(
         `INSERT INTO order_items 
@@ -45,11 +181,11 @@ router.post("/new", async (req, res) => {
           it.name,
           it.price,
           it.qty,
-          it.subtotal,                         // <== correct subtotal position
+          it.subtotal,
           it.size || null,
           it.spice || null,
-          JSON.stringify(it.addons || []),     // always JSON
-          it.juice ? it.juice.name : null      // DB accepts NULL ✔
+          JSON.stringify(it.addons || []),
+          it.juice ? it.juice.name : null
         ]
       );
     }
@@ -62,212 +198,22 @@ router.post("/new", async (req, res) => {
   }
 });
 
-
 // ============================================================
-// 2️⃣ GET ORDER BY ID (Payment page + Admin)
+// 5️⃣ VIEW ORDER
 // ============================================================
 router.get("/view/:orderId", async (req, res) => {
-  try {
     const { orderId } = req.params;
 
-    const [[order]] = await db.query(
-      "SELECT * FROM orders WHERE id = ?",
-      [orderId]
-    );
+    try {
+        const [[order]] = await db.query("SELECT * FROM orders WHERE id = ?", [orderId]);
+        const [items] = await db.query("SELECT * FROM order_items WHERE order_id = ?", [orderId]);
 
-    if (!order) return res.status(404).json({ success: false, error: "Order not found" });
+        res.json({ order, items });
 
-    const [items] = await db.query(
-      "SELECT * FROM order_items WHERE order_id = ?",
-      [orderId]
-    );
-
-    // parse addons
-    items.forEach(i => {
-      try {
-        if (typeof i.addons === "string") i.addons = JSON.parse(i.addons);
-      } catch {
-        i.addons = [];
-      }
-    });
-
-    res.json({ success: true, order, items });
-
-  } catch (err) {
-    console.error("❌ GET /view/:orderId ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
+    } catch (err) {
+        console.error("❌ view ERROR:", err);
+        res.status(500).json({ success: false });
+    }
 });
-
-
-// ============================================================
-// 3️⃣ CUSTOMER HISTORY (matches localhost version)
-// ============================================================
-router.get("/history/:tableNo", async (req, res) => {
-  const { tableNo } = req.params;
-
-  try {
-    const [sessionRows] = await db.query(
-      "SELECT session_id FROM tables WHERE table_no = ?",
-      [tableNo]
-    );
-
-    if (!sessionRows.length) {
-      return res.status(404).json({ error: "Table not found" });
-    }
-
-    const sessionId = sessionRows[0].session_id;
-
-    const [orders] = await db.query(
-      "SELECT * FROM orders WHERE table_no = ? AND session_id = ? ORDER BY created_at DESC",
-      [tableNo, sessionId]
-    );
-
-    for (const order of orders) {
-      const [items] = await db.query(
-        "SELECT * FROM order_items WHERE order_id = ?",
-        [order.id]
-      );
-
-      items.forEach(i => {
-        try {
-          if (typeof i.addons === "string") i.addons = JSON.parse(i.addons);
-        } catch {
-          i.addons = [];
-        }
-      });
-
-      order.items = items;
-    }
-
-    res.json(orders);
-
-  } catch (err) {
-    console.error("❌ HISTORY ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// ============================================================
-// 4️⃣ ADMIN LIST ORDERS
-// ============================================================
-router.get("/list", requireAdmin, async (req, res) => {
-  try {
-    const [rows] = await db.query("SELECT * FROM orders ORDER BY created_at DESC");
-    res.json(rows);
-  } catch (err) {
-    console.error("❌ ADMIN LIST ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// ============================================================
-// 5️⃣ CHECKOUT (matches localhost version EXACTLY)
-// ============================================================
-router.post("/checkout/:tableNo", async (req, res) => {
-  try {
-    const tableNo = req.params.tableNo;
-
-    // 1. Get session_id
-    const [tableRows] = await db.query(
-      "SELECT session_id FROM tables WHERE table_no = ?",
-      [tableNo]
-    );
-
-    if (!tableRows.length) {
-      return res.status(404).json({ success: false, error: "Table not found" });
-    }
-
-    const sessionId = tableRows[0].session_id;
-
-    // 2. Get orders in this session
-    const [orders] = await db.query(
-      "SELECT id FROM orders WHERE table_no = ? AND session_id = ?",
-      [tableNo, sessionId]
-    );
-
-    if (!orders.length) {
-      return res.json({ success: false, message: "No orders found" });
-    }
-
-    let items = [];
-    let totalItems = 0;
-    let totalPrice = 0;
-
-    // 3. Expand items
-    for (const order of orders) {
-      const [orderItems] = await db.query(
-        "SELECT * FROM order_items WHERE order_id = ?",
-        [order.id]
-      );
-
-      orderItems.forEach(it => {
-        let addons = [];
-        try {
-          addons = it.addons ? JSON.parse(it.addons) : [];
-        } catch {}
-
-        items.push({
-          name: it.name,
-          qty: it.qty,
-          subtotal: it.subtotal,
-          size: it.size,
-          spice: it.spice,
-          juice: it.juice,
-          addons
-        });
-
-        totalItems += it.qty;
-        totalPrice += it.subtotal;
-      });
-    }
-
-    // 4. Return to tables.js (receipt popup)
-    return res.json({
-      success: true,
-      table_no: tableNo,
-      session_id: sessionId,
-      items,
-      total_items: totalItems,
-      total_price: totalPrice
-    });
-
-  } catch (err) {
-    console.error("❌ CHECKOUT ERROR:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-
-// GET /api/order/:id → return order + items
-router.get("/:id", async (req, res) => {
-  const id = req.params.id;
-
-  try {
-    const [orderRows] = await db.query(
-      "SELECT * FROM orders WHERE id = ?",
-      [id]
-    );
-
-    if (orderRows.length === 0) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-
-    const order = orderRows[0];
-
-    const [items] = await db.query(
-      "SELECT * FROM order_items WHERE order_id = ?",
-      [id]
-    );
-
-    res.json({ order, items });
-  } catch (err) {
-    console.error("❌ Error fetching order:", err);
-    res.status(500).json({ error: "Server error loading order" });
-  }
-});
-
 
 module.exports = router;
