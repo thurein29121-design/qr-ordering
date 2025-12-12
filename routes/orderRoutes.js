@@ -121,10 +121,10 @@ router.delete("/item/:id", async (req, res) => {
     await db.query("DELETE FROM order_items WHERE id = ?", [id]);
 
     const [[sum]] = await db.query(
-      "SELECT SUM(subtotal) AS total, COUNT(*) AS cnt 
-       FROM order_items WHERE order_id = ?",
-      [item.order_id]
-    );
+  "SELECT SUM(subtotal) AS total, COUNT(*) AS count FROM order_items WHERE order_id = ?",
+  [item.order_id]
+);
+
 
     if (!sum.cnt) {
       await db.query("DELETE FROM orders WHERE id = ?", [item.order_id]);
