@@ -92,52 +92,123 @@ body {
 .status-checkout { background: #3f7ae0; color: white; }
 .btn-cancel { background: #2e2e3a; }
 
-#receipt-overlay {
+/* ===== Check / Edit overlay ===== */
+#check-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 99999;
+  z-index: 99998;
 }
 
-#receipt-popup {
-  background: #fff;
-  color: #000;
-  padding: 20px;
-  width: 350px;
-  border-radius: 10px;
-  font-family: "Courier New", monospace;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
-}
-
-.receipt-title {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.receipt-box {
-  white-space: pre-wrap;
-  font-size: 14px;
-  border: 1px dashed #333;
-  padding: 10px;
-  margin-bottom: 10px;
-  height: 300px;
+#check-popup {
+  width: 95%;
+  max-width: 600px;
+  max-height: 90vh;
+  background: #111827;
+  color: #e5e7eb;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.7);
   overflow-y: auto;
 }
 
-.receipt-btn {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  background: #222;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 6px;
+#check-title {
+  margin: 0 0 10px;
+  font-size: 20px;
 }
 
-.receipt-btn.cancel {
-  background: #777;
+#check-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.check-row {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #1f2937;
+}
+
+.check-main {
+  flex: 1;
+}
+
+.check-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.check-meta {
+  font-size: 12px;
+  color: #9ca3af;
+  white-space: pre-line;
+}
+
+.check-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 110px;
+}
+
+.check-qty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.check-qty button,
+.check-delete {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.check-qty button {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.check-subtotal {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.check-delete {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.check-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.check-close-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #4b5563;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* New button style in popup */
+.status-check {
+  background: #f59e0b;
+  color: #111827;
 }

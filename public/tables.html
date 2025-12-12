@@ -23,23 +23,37 @@
       <p class="popup-subtitle">Select Action</p>
 
       <!-- OPEN (GREEN) -->
-      <button class="status-btn status-occupied" data-state="1">🔴 Sitting</button>
+     <!-- OPEN (GREEN) -->
+<button class="status-btn status-occupied" data-state="1">🔴 Sitting</button>
 
-      <!-- CLOSE & SHOW RECEIPT -->
-      <button class="status-btn status-checkout" id="checkoutBtn">🟢 Close & Show Receipt </button>
+<!-- CHECK / EDIT ORDERS -->
+<button class="status-btn status-check" id="checkBtn">✔ Check Orders</button>
 
-      <button class="btn-cancel" id="cancel-btn">Cancel</button>
+<!-- CLOSE & SHOW RECEIPT -->
+<button class="status-btn status-checkout" id="checkoutBtn">🟢 Close & Show Receipt</button>
+
+<button class="btn-cancel" id="cancel-btn">Cancel</button>
+
     </div>
   </div>
 
   <!-- RECEIPT POPUP -->
-  <div id="receipt-overlay" class="hidden">
-    <div id="receipt-popup">
-      <h2 class="receipt-title">🧾 Receipt</h2>
-      <pre id="receipt-text" class="receipt-box"></pre>
-      <button id="close-receipt" class="receipt-btn cancel">Close</button>
+<!-- CHECK / EDIT POPUP -->
+<div id="check-overlay" class="hidden">
+  <div id="check-popup">
+    <h2 id="check-title">Table orders</h2>
+
+    <div id="check-items"></div>
+
+    <div class="check-summary">
+      <span>Total items: <strong id="check-total-items">0</strong></span>
+      <span>Total: ¥<strong id="check-total-price">0</strong></span>
     </div>
+
+    <button id="check-close" class="check-close-btn">Close</button>
   </div>
+</div>
+
 
   <script src="tables.js"></script>
 </body>

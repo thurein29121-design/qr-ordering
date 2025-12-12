@@ -5,14 +5,22 @@ const popupTitle = document.getElementById("popup-title");
 const checkoutBtn = document.getElementById("checkoutBtn");
 const openBtn = document.querySelector(".status-occupied");
 
-const receiptPopup = document.getElementById("receipt-overlay");
-const receiptText = document.getElementById("receipt-text");
-const closeReceiptBtn = document.getElementById("close-receipt");
+const checkBtn = document.getElementById("checkBtn");
 
-closeReceiptBtn.onclick = () => receiptPopup.classList.add("hidden");
+const checkOverlay = document.getElementById("check-overlay");
+const checkTitle = document.getElementById("check-title");
+const checkItems = document.getElementById("check-items");
+const checkTotalItems = document.getElementById("check-total-items");
+const checkTotalPrice = document.getElementById("check-total-price");
+const checkCloseBtn = document.getElementById("check-close");
+
+checkCloseBtn.onclick = () => checkOverlay.classList.add("hidden");
 
 let currentTable = null;
-
+checkBtn.onclick = async () => {
+  if (!currentTable) return;
+  await loadCheckData(currentTable);
+};
 // Load tables
 async function loadTables() {
   try {
@@ -160,6 +168,129 @@ function formatReceipt(data) {
   out += `Thank you!\n`;
 
   return out;
+}
+async function loadCheckData(tableNo) {
+  try {
+    const res = await fetch(`/api/order/table-items/${tableNo}`);
+    const data = await res.json();
+
+    checkTitle.textContent = `TABLE ${tableNo} — Orders`;
+    renderCheckPopup(data, tableNo);
+  } catch (err) {
+    console.error("❌ Check load error:", err);
+    alert("Failed to load items for this table");
+  }
+}
+
+function renderCheckPopup(data, tableNo) {
+  checkItems.innerHTML = "";
+
+  if (!data.success || !data.items || data.items.length === 0) {
+    checkItems.innerHTML = `<p>No items for this table.</p>`;
+    checkTotalItems.textContent = "0";
+    checkTotalPrice.textContent = "0";
+  } else {
+    data.items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "check-row";
+      row.dataset.itemId = item.id;
+
+      const metaParts = [];
+      if (item.size) metaParts.push(`Size: ${item.size}`);
+      if (item.spice) metaParts.push(`Spice: ${item.spice}`);
+      if (item.juice) metaParts.push(`Juice: ${item.juice}`);
+      if (item.addons && item.addons.length) {
+        metaParts.push("Add-ons: " + item.addons.map(a => a.name).join(", "));
+      }
+      const metaText = metaParts.join("\n");
+
+      row.innerHTML = `
+        <div class="check-main">
+          <div class="check-name">${item.name}</div>
+          ${metaText ? `<div class="check-meta">${metaText}</div>` : ""}
+        </div>
+        <div class="check-controls">
+          <div class="check-qty">
+            <button data-action="dec">-</button>
+            <span class="check-qty-value">${item.qty}</span>
+            <button data-action="inc">+</button>
+          </div>
+          <div class="check-subtotal">¥${Number(item.subtotal).toFixed(2)}</div>
+          <button class="check-delete" data-action="delete">✕</button>
+        </div>
+      `;
+
+      // attach events
+      const decBtn = row.querySelector('[data-action="dec"]');
+      const incBtn = row.querySelector('[data-action="inc"]');
+      const delBtn = row.querySelector('[data-action="delete"]');
+
+      decBtn.onclick = () => {
+        const current = Number(
+          row.querySelector(".check-qty-value").textContent
+        );
+        const next = current - 1;
+        if (next < 1) return;
+        updateItemQty(item.id, next, tableNo);
+      };
+
+      incBtn.onclick = () => {
+        const current = Number(
+          row.querySelector(".check-qty-value").textContent
+        );
+        const next = current + 1;
+        updateItemQty(item.id, next, tableNo);
+      };
+
+      delBtn.onclick = () => {
+        if (confirm("Delete this item?")) {
+          deleteItem(item.id, tableNo);
+        }
+      };
+
+      checkItems.appendChild(row);
+    });
+
+    checkTotalItems.textContent = String(data.total_items);
+    checkTotalPrice.textContent = Number(data.total_price).toFixed(2);
+  }
+
+  checkOverlay.dataset.tableNo = tableNo;
+  checkOverlay.classList.remove("hidden");
+}
+
+async function updateItemQty(itemId, qty, tableNo) {
+  try {
+    const res = await fetch(`/api/order/item/${itemId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qty })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.error || "Failed to update item");
+      return;
+    }
+    await loadCheckData(tableNo);
+  } catch (err) {
+    console.error("❌ Update qty error:", err);
+    alert("Update error");
+  }
+}
+
+async function deleteItem(itemId, tableNo) {
+  try {
+    const res = await fetch(`/api/order/item/${itemId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.error || "Failed to delete item");
+      return;
+    }
+    await loadCheckData(tableNo);
+  } catch (err) {
+    console.error("❌ Delete item error:", err);
+    alert("Delete error");
+  }
 }
 
 
