@@ -2,6 +2,17 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db/connection");
 
+// GET ALL TABLES
+router.get("/", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM tables ORDER BY table_no ASC");
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Failed to load tables:", err);
+    res.status(500).json({ error: "Failed to load tables" });
+  }
+});
+
 // ============================================================
 // GET TABLE STATUS
 // ============================================================
