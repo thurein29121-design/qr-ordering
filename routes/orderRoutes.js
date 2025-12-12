@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db/connection");
-const { requireAdmin } = require("../middleware/auth");
 
 // ============================================================
 // 1️⃣ CREATE NEW ORDER (Customer Checkout)
