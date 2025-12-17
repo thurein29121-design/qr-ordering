@@ -10,8 +10,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loading = document.getElementById("loading");
 
   try {
-   const session = localStorage.getItem("tasteqr_session");
-  const res = await fetch(`/api/order/history/${tableNo}?session=${session}`);
+   // 1️⃣ Ask backend for table status (get session_id)
+const statusRes = await fetch(`/api/tables/${tableNo}/status`);
+const status = await statusRes.json();
+
+// 2️⃣ History should show PREVIOUS session
+const historySession = Number(status.session_id) - 1;
+
+if (historySession < 1) {
+  loading.textContent = "No order history found.";
+  return;
+}
+
+// 3️⃣ Fetch history
+const res = await fetch(
+  `/api/order/history/${tableNo}?session=${historySession}`
+);
+
 
 const data = await res.json();
 
