@@ -342,6 +342,23 @@ router.get("/view/:orderId", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+// ============================================================
+// ADMIN — LIST ALL ORDERS
+// ============================================================
+router.get("/list", async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT id, table_no, total, status, created_at
+      FROM orders
+      ORDER BY created_at DESC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ ORDER LIST ERROR:", err);
+    res.status(500).json({ error: "Failed to load orders" });
+  }
+});
 
 // EXPORT ROUTER
 module.exports = router;
