@@ -37,20 +37,26 @@
     </div>
   </div>
 
-  <!-- RECEIPT POPUP -->
-<!-- CHECK / EDIT POPUP -->
-<div id="check-overlay" class="hidden">
-  <div id="check-popup">
-    <h2 id="check-title">Table orders</h2>
+ <!-- RECEIPT POPUP -->
+<div id="receiptPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; align-items:center; justify-content:center; z-index:99999;
+">
+  <div style="
+    background:#111827; color:#e5e7eb;
+    width:90%; max-width:500px;
+    padding:20px; border-radius:16px;
+  ">
+    <pre id="receiptText" style="
+      white-space:pre-wrap;
+      font-family:monospace;
+      font-size:14px;
+    "></pre>
 
-    <div id="check-items"></div>
-
-    <div class="check-summary">
-      <span>Total items: <strong id="check-total-items">0</strong></span>
-      <span>Total: ¥<strong id="check-total-price">0</strong></span>
-    </div>
-
-    <button id="check-close" class="check-close-btn">Close</button>
+    <button onclick="document.getElementById('receiptPopup').classList.add('hidden')"
+      style="margin-top:12px;width:100%;padding:10px;border:none;border-radius:8px;">
+      Close
+    </button>
   </div>
 </div>
 

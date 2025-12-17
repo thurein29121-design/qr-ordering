@@ -64,6 +64,56 @@ router.get("/table-items/:tableNo", async (req, res) => {
 });
 
 // ============================================================
+// 7️⃣ HISTORY — GET ORDER HISTORY FOR TABLE + SESSION
+// ============================================================
+router.get("/history/:tableNo", async (req, res) => {
+  const { tableNo } = req.params;
+  const sessionId = req.query.session;
+
+  if (!sessionId) {
+    return res.status(400).json({ success: false, error: "Missing session" });
+  }
+
+  try {
+    const [orders] = await db.query(
+      "SELECT id FROM orders WHERE table_no = ? AND session_id = ?",
+      [tableNo, sessionId]
+    );
+
+    if (!orders.length) {
+      return res.json({ success: true, items: [] });
+    }
+
+    const ids = orders.map(o => o.id);
+    const placeholders = ids.map(() => "?").join(",");
+
+    const [items] = await db.query(
+      `SELECT * FROM order_items WHERE order_id IN (${placeholders})`,
+      ids
+    );
+
+    items.forEach(i => {
+      try {
+        i.addons = i.addons ? JSON.parse(i.addons) : [];
+      } catch {
+        i.addons = [];
+      }
+    });
+
+    res.json({
+      success: true,
+      table_no: tableNo,
+      session_id: sessionId,
+      items
+    });
+
+  } catch (err) {
+    console.error("❌ HISTORY ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// ============================================================
 // 2️⃣ STAFF — UPDATE ITEM QTY
 // ============================================================
 router.put("/item/:id", async (req, res) => {
