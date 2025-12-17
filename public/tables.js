@@ -15,6 +15,9 @@ const checkTotalPrice = document.getElementById("check-total-price");
 const checkCloseBtn = document.getElementById("check-close");
 
 checkCloseBtn.onclick = () => checkOverlay.classList.add("hidden");
+const receiptPopup = document.getElementById("receiptPopup");
+const receiptText = document.getElementById("receiptText");
+
 
 let currentTable = null;
 checkBtn.onclick = async () => {
@@ -28,6 +31,7 @@ async function loadTables() {
   try {
     const res = await fetch("/api/tables");
     tables = await res.json();
+    tables.sort((a, b) => Number(a.table_no) - Number(b.table_no));
     renderTiles();
   } catch (e) {
     console.error("Failed to load tables:", e);
