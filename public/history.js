@@ -13,67 +13,60 @@ document.addEventListener("DOMContentLoaded", async () => {
    const session = localStorage.getItem("tasteqr_session");
   const res = await fetch(`/api/order/history/${tableNo}?session=${session}`);
 
-    const orders = await res.json();
+const data = await res.json();
 
-    if (!Array.isArray(orders) || orders.length === 0) {
-      loading.textContent = "No order history found.";
-      return;
-    }
+if (!data.success || !data.items || data.items.length === 0) {
+  loading.textContent = "No order history found.";
+  return;
+}
+
 
     loading.style.display = "none";
 
-    orders.forEach(order => {
-      const card = document.createElement("div");
-      card.className = "history-card";
+   loading.style.display = "none";
 
-      card.innerHTML = `
-        <div class="history-header">
-          <h3>Order #${order.id}</h3>
-          <span>${new Date(order.created_at).toLocaleString()}</span>
-        </div>
+const card = document.createElement("div");
+card.className = "history-card";
 
-        <div class="order-items"></div>
+card.innerHTML = `
+  <div class="history-header">
+    <h3>Table ${data.table_no}</h3>
+    <span>Session ${data.session_id}</span>
+  </div>
 
-        <h3 style="text-align:right;margin-top:10px;">
-          Total: ¥${Number(order.total).toFixed(2)}
-        </h3>
-      `;
+  <div class="order-items"></div>
+`;
 
-      const itemsContainer = card.querySelector(".order-items");
+const itemsContainer = card.querySelector(".order-items");
 
-      order.items.forEach(it => {
-        // addons fix: handle array OR JSON string
-        let addonsArr = [];
-        if (Array.isArray(it.addons)) {
-          addonsArr = it.addons;
-        } else if (typeof it.addons === "string" && it.addons.trim() !== "") {
-          try {
-            addonsArr = JSON.parse(it.addons);
-          } catch {}
-        }
+data.items.forEach(it => {
+  let addonsArr = [];
+  try {
+    addonsArr = Array.isArray(it.addons) ? it.addons : JSON.parse(it.addons || "[]");
+  } catch {}
 
-        const details = [
-          it.size ? `(${it.size})` : "",
-          it.spice ? `Spice: ${it.spice}` : "",
-          it.juice ? `Juice: ${it.juice}` : "",
-          addonsArr.length ? `Add-ons: ${addonsArr.map(a => a.name).join(", ")}` : ""
-        ].filter(x => x).join("<br>");
+  const details = [
+    it.size ? `(${it.size})` : "",
+    it.spice ? `Spice: ${it.spice}` : "",
+    it.juice ? `Juice: ${it.juice}` : "",
+    addonsArr.length ? `Add-ons: ${addonsArr.map(a => a.name).join(", ")}` : ""
+  ].filter(Boolean).join("<br>");
 
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "item";
-        itemDiv.innerHTML = `
-          <div>
-            <strong>${it.name}</strong><br>
-            <div class="item-details">${details}</div>
-          </div>
-          <div>¥${it.subtotal}</div>
-        `;
+  const itemDiv = document.createElement("div");
+  itemDiv.className = "item";
+  itemDiv.innerHTML = `
+    <div>
+      <strong>${it.name}</strong><br>
+      <div class="item-details">${details}</div>
+    </div>
+    <div>¥${it.subtotal}</div>
+  `;
 
-        itemsContainer.appendChild(itemDiv);
-      });
+  itemsContainer.appendChild(itemDiv);
+});
 
-      container.appendChild(card);
-    });
+container.appendChild(card);
+
   } catch (err) {
     container.innerHTML = "<p style='color:red;'>Failed to load history.</p>";
     console.error(err);
