@@ -14,7 +14,10 @@ const checkTotalItems = document.getElementById("check-total-items");
 const checkTotalPrice = document.getElementById("check-total-price");
 const checkCloseBtn = document.getElementById("check-close");
 
-checkCloseBtn.onclick = () => checkOverlay.classList.add("hidden");
+if (checkCloseBtn && checkOverlay) {
+  checkCloseBtn.onclick = () => checkOverlay.classList.add("hidden");
+}
+
 const receiptPopup = document.getElementById("receiptPopup");
 const receiptText = document.getElementById("receiptText");
 
