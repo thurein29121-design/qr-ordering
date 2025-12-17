@@ -10,80 +10,63 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loading = document.getElementById("loading");
 
   try {
-   // 1️⃣ Ask backend for table status (get session_id)
-const statusRes = await fetch(`/api/tables/${tableNo}/status`);
-const status = await statusRes.json();
+    // SAME SOURCE AS STAFF CHECK (READ-ONLY)
+    const res = await fetch(`/api/order/table-items/${tableNo}`);
+    const data = await res.json();
 
-// 2️⃣ History should show PREVIOUS session
-const historySession = Number(status.session_id) - 1;
-
-if (historySession < 1) {
-  loading.textContent = "No order history found.";
-  return;
-}
-
-// 3️⃣ Fetch history
-const res = await fetch(
-  `/api/order/history/${tableNo}?session=${historySession}`
-);
-
-
-const data = await res.json();
-
-if (!data.success || !data.items || data.items.length === 0) {
-  loading.textContent = "No order history found.";
-  return;
-}
-
+    if (!data.success || !data.items || data.items.length === 0) {
+      loading.textContent = "No order found.";
+      return;
+    }
 
     loading.style.display = "none";
 
-   loading.style.display = "none";
+    const card = document.createElement("div");
+    card.className = "history-card";
 
-const card = document.createElement("div");
-card.className = "history-card";
+    card.innerHTML = `
+      <div class="history-header">
+        <h3>Table ${tableNo}</h3>
+        <span>Current Order</span>
+      </div>
 
-card.innerHTML = `
-  <div class="history-header">
-    <h3>Table ${data.table_no}</h3>
-    <span>Session ${data.session_id}</span>
-  </div>
+      <div class="order-items"></div>
 
-  <div class="order-items"></div>
-`;
+      <h3 style="text-align:right;margin-top:10px;">
+        Total: ¥${Number(data.total_price).toFixed(2)}
+      </h3>
+    `;
 
-const itemsContainer = card.querySelector(".order-items");
+    const itemsContainer = card.querySelector(".order-items");
 
-data.items.forEach(it => {
-  let addonsArr = [];
-  try {
-    addonsArr = Array.isArray(it.addons) ? it.addons : JSON.parse(it.addons || "[]");
-  } catch {}
+    data.items.forEach(item => {
+      const meta = [];
 
-  const details = [
-    it.size ? `(${it.size})` : "",
-    it.spice ? `Spice: ${it.spice}` : "",
-    it.juice ? `Juice: ${it.juice}` : "",
-    addonsArr.length ? `Add-ons: ${addonsArr.map(a => a.name).join(", ")}` : ""
-  ].filter(Boolean).join("<br>");
+      if (item.size) meta.push(`Size: ${item.size}`);
+      if (item.spice) meta.push(`Spice: ${item.spice}`);
+      if (item.juice) meta.push(`Juice: ${item.juice}`);
+      if (item.addons && item.addons.length) {
+        meta.push("Add-ons: " + item.addons.map(a => a.name).join(", "));
+      }
 
-  const itemDiv = document.createElement("div");
-  itemDiv.className = "item";
-  itemDiv.innerHTML = `
-    <div>
-      <strong>${it.name}</strong><br>
-      <div class="item-details">${details}</div>
-    </div>
-    <div>¥${it.subtotal}</div>
-  `;
+      const row = document.createElement("div");
+      row.className = "item";
 
-  itemsContainer.appendChild(itemDiv);
-});
+      row.innerHTML = `
+        <div>
+          <strong>${item.qty} × ${item.name}</strong><br>
+          <div class="item-details">${meta.join("<br>")}</div>
+        </div>
+        <div>¥${Number(item.subtotal).toFixed(2)}</div>
+      `;
 
-container.appendChild(card);
+      itemsContainer.appendChild(row);
+    });
+
+    container.appendChild(card);
 
   } catch (err) {
-    container.innerHTML = "<p style='color:red;'>Failed to load history.</p>";
+    container.innerHTML = "<p style='color:red;'>Failed to load order.</p>";
     console.error(err);
   }
 });
