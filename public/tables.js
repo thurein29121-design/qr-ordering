@@ -20,7 +20,9 @@ let currentTable = null;
 checkBtn.onclick = async () => {
   if (!currentTable) return;
   await loadCheckData(currentTable);
+  checkOverlay.classList.remove("hidden"); // ✅ REQUIRED
 };
+
 // Load tables
 async function loadTables() {
   try {

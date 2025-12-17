@@ -126,7 +126,7 @@ router.delete("/item/:id", async (req, res) => {
 );
 
 
-    if (!sum.cnt) {
+    if (!sum.count) {
       await db.query("DELETE FROM orders WHERE id = ?", [item.order_id]);
     } else {
       await db.query(
