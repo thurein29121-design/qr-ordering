@@ -198,6 +198,70 @@ router.post("/new", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+// ============================================================
+// 6️⃣ CHECKOUT — GET RECEIPT DATA FOR TABLE
+// ============================================================
+router.post("/checkout/:tableNo", async (req, res) => {
+  const { tableNo } = req.params;
+
+  try {
+    // 1️⃣ Get current session for table
+    const [[table]] = await db.query(
+      "SELECT session_id FROM tables WHERE table_no = ?",
+      [tableNo]
+    );
+
+    if (!table) {
+      return res.json({ success: false, message: "Table not found" });
+    }
+
+    const sessionId = table.session_id;
+
+    // 2️⃣ Get orders for this table + session
+    const [orders] = await db.query(
+      "SELECT * FROM orders WHERE table_no = ? AND session_id = ?",
+      [tableNo, sessionId]
+    );
+
+    if (!orders.length) {
+      return res.json({
+        success: false,
+        table_no: tableNo,
+        session_id: sessionId,
+        items: []
+      });
+    }
+
+    const orderIds = orders.map(o => o.id);
+    const placeholders = orderIds.map(() => "?").join(",");
+
+    // 3️⃣ Get all items
+    const [items] = await db.query(
+      `SELECT * FROM order_items WHERE order_id IN (${placeholders})`,
+      orderIds
+    );
+
+    // parse addons JSON
+    items.forEach(i => {
+      try {
+        i.addons = i.addons ? JSON.parse(i.addons) : [];
+      } catch {
+        i.addons = [];
+      }
+    });
+
+    res.json({
+      success: true,
+      table_no: tableNo,
+      session_id: sessionId,
+      items
+    });
+
+  } catch (err) {
+    console.error("❌ CHECKOUT ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
 
 // ============================================================
 // 5️⃣ VIEW ORDER BY ID (ADMIN / STAFF / CUSTOMER)
