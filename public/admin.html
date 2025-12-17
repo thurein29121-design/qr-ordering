@@ -187,10 +187,7 @@ async function loadOrders() {
                 <td>${o.id}</td>
                 <td>${o.table_no}</td>
                 <td>¥${o.total}</td>
-                <td style="font-weight:700;color:${o.status == 1 ? 'lime' : 'orange'}">
-                  ${o.status == 1 ? "PAID" : "NOT PAID"}
-                </td>
-
+                <td>${o.status}</td>
                 <td>${new Date(o.created_at).toLocaleString()}</td>
                 <td><button data-id="${o.id}" class="view-btn">View</button></td>
             </tr>
