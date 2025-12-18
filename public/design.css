@@ -261,7 +261,7 @@ footer{
   gap: 15px;
   z-index: 1000;
   transition: all 0.25s;
-  background: transparent;
+  
 }
 
 .cart-float:hover {
