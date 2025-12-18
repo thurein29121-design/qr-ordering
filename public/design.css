@@ -328,6 +328,7 @@ footer{
 
 .popup-back-btn {
   border: none;
+  position: fixed;
   background: none;
   font-size: 18px;
   font-weight: 700;
