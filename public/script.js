@@ -312,7 +312,7 @@ function openCustomizePopup(item) {
   ===================== */
   if (item.size_price && Object.keys(item.size_price).length > 0) {
     sizeDiv.style.display = "block";
-    sizeDiv.innerHTML = "<h4>Choose Size</h4>";
+    sizeDiv.innerHTML = `<h4>Choose Size<span style="color:red;">(required)</span></h4>`;
 
     Object.entries(item.size_price).forEach(([size, extra]) => {
       const btn = document.createElement("div");
@@ -332,7 +332,7 @@ function openCustomizePopup(item) {
   ===================== */
   if (item.spicy_levels && item.spicy_levels.length > 0) {
     spiceDiv.style.display = "block";
-    spiceDiv.innerHTML = "<h4>Spice Level</h4>";
+    spiceDiv.innerHTML = `<h4>Spice Level<span style="color:red;">(required)</span></h4>`;
 
     item.spicy_levels.forEach(level => {
       const btn = document.createElement("div");
