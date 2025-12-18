@@ -70,6 +70,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const orderId = params.get("orderId");
   const tableNo = params.get("table");
+  //for null_spice
+  const NO_SPICE_CATEGORIES = ["drink", "dessert", "alcohol"];
+  const hideSpice = NO_SPICE_CATEGORIES.includes(item.category);
+
+  const details = [
+    item.size ? `Size: ${item.size}` : "",
+    !hideSpice && item.spice ? `Spice: ${item.spice}` : "",
+    addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : "",
+    item.juice ? `Juice: ${item.juice}` : ""
+    ].filter(Boolean);
+
 
   // Fill header info
   document.getElementById("order-id").textContent = orderId || "-";
@@ -105,10 +116,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Build details list
         const details = [
           item.size ? `Size: ${item.size}` : "",
-          item.spice ? `Spice: ${item.spice}` : "",
+          item.spice && item.spice !== "Normal"
+                                        ? `Spice: ${item.spice}`
+                                        : "",
+
           addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : "",
           item.juice ? `Juice: ${item.juice}` : "" 
-        ].filter(Boolean); // remove empty
+        ].filter(Boolean); 
 
         const detailsHTML =
           details.length > 0
