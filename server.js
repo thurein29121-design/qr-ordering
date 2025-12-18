@@ -1,8 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const cookieParser = require("cookie-parser");
-require("dotenv").config({ path: "./backend/.env" }); // adjust if needed
+require("dotenv").config();
 
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
@@ -16,12 +15,8 @@ const app = express();
 /* ======================
    GLOBAL MIDDLEWARE
 ====================== */
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
 
 /* ======================
    HEALTH CHECK
@@ -31,77 +26,55 @@ app.get("/health", (req, res) => {
 });
 
 /* ======================
-   API ROUTES (PUBLIC)
+   API ROUTES
 ====================== */
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/tables", tableRoutes);
+app.use("/api/analytics", requireAdmin, analyticsRoutes);
 
 /* ======================
-   ADMIN LOGIN (SETS COOKIE)
+   ADMIN LOGIN (JWT ONLY)
 ====================== */
 app.post("/api/admin/login", (req, res) => {
   const { username, password } = req.body;
 
   if (
-    username !== process.env.ADMIN_USER ||
-    password !== process.env.ADMIN_PASSWORD
+    username !== (process.env.ADMIN_USER || "admin") ||
+    password !== (process.env.ADMIN_PASSWORD || "admin")
   ) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
   const token = generateAdminToken(username);
-
-  res.cookie("adminToken", token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 12 * 60 * 60 * 1000 // 12 hours
-  });
-
-  res.json({ success: true });
+  res.json({ token });
 });
 
 /* ======================
-   PROTECTED ADMIN APIs
-====================== */
-app.use("/api/analytics", requireAdmin, analyticsRoutes);
-
-/* ======================
-   PROTECTED ADMIN HTML
+   STATIC FRONTEND
 ====================== */
 const publicDir = path.join(__dirname, "public");
-
-app.get("/admin.html", requireAdmin, (req, res) => {
-  res.sendFile(path.join(publicDir, "admin.html"));
-});
-
-app.get("/sales.html", requireAdmin, (req, res) => {
-  res.sendFile(path.join(publicDir, "sales.html"));
-});
+app.use(express.static(publicDir));
 
 /* ======================
-   PUBLIC HTML PAGES
+   ALLOWED HTML FILES
 ====================== */
-const publicPages = [
+const htmlFiles = [
   "main.html",
   "tables.html",
   "history.html",
   "cart.html",
-  "payment.html"
+  "payment.html",
+  "admin.html",
+  "sales.html"
 ];
 
 app.get("/:page", (req, res, next) => {
-  if (publicPages.includes(req.params.page)) {
+  if (htmlFiles.includes(req.params.page)) {
     return res.sendFile(path.join(publicDir, req.params.page));
   }
   next();
 });
-
-/* ======================
-   STATIC FILES (LAST)
-====================== */
-app.use(express.static(publicDir));
 
 /* ======================
    START SERVER

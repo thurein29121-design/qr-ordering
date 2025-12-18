@@ -137,6 +137,14 @@
     </tbody>
   </table>
 
-  <script src="sales.js"></script>
+  
+  <script>
+  const pw = prompt("Enter password for Sales Dashboard:");
+  if (pw !== "1234") {
+    alert("Access denied");
+    window.location.href = "main.html";
+  }
+</script>
+<script src="sales.js"></script>
 </body>
 </html>
