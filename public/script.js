@@ -132,68 +132,64 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================
   // 🔔 CALL STAFF — 3s Sound + Notification
   // ==========================
-  if (callBtn) {
-    const bellSound = new Audio("/sound/alarm.mp3");
+if (callBtn) {
+  const bellSound = { play() {}, pause() {}, currentTime: 0 };
 
-    // Create notification box
-    const notice = document.createElement("div");
-    notice.id = "staffNotice";
-    notice.style.cssText = `
-      position: fixed;
-      left: 50%;
-      bottom: 60px;
-      transform: translateX(-50%);
-      background: #4CAF50;
-      color: white;
-      font-weight: 600;
-      padding: 12px 18px;
-      border-radius: 10px;
-      opacity: 0;
-      transition: opacity 0.4s ease, bottom 0.4s ease;
-      z-index: 9999;
-    `;
-    document.body.appendChild(notice);
+  // Create notification box
+  const notice = document.createElement("div");
+  notice.id = "staffNotice";
+  notice.style.cssText = `
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    background: #4CAF50;
+    color: white;
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.4s ease, bottom 0.4s ease;
+    z-index: 9999;
+  `;
+  document.body.appendChild(notice);
 
-    callBtn.addEventListener("click", () => {
-      try {
+  callBtn.addEventListener("click", () => {
+    try {
+      callBtn.classList.add("calling");
+      callBtn.disabled = true;
+      callBtn.textContent = "🚶‍♂️ Staff Coming...";
+
+      setTimeout(() => {
         bellSound.pause();
         bellSound.currentTime = 0;
+      }, 3000);
 
-        bellSound.play().catch(() => {});
-
-        callBtn.classList.add("calling");
-        callBtn.disabled = true;
-        callBtn.textContent = "🚶‍♂️ Staff Coming...";
-
-        setTimeout(() => {
-          bellSound.pause();
-          bellSound.currentTime = 0;
-        }, 3000);
-
-        setTimeout(() => {
-          showStaffNotice("✅ Staff has been notified!");
-        }, 3000);
-
-        setTimeout(() => {
-          callBtn.classList.remove("calling");
-          callBtn.disabled = false;
-          callBtn.textContent = "🔔 Call Staff";
-        }, 3000);
-      } catch (err) {
-        console.error("❌ Call staff error:", err);
-      }
-    });
-
-    function showStaffNotice(msg) {
-      notice.textContent = msg;
-      notice.style.bottom = "80px";
-      notice.style.opacity = "1";
       setTimeout(() => {
-        notice.style.opacity = "0";
-        notice.style.bottom = "60px";
-      }, 2000);
+        showStaffNotice("✅ Staff has been notified!");
+      }, 3000);
+
+      setTimeout(() => {
+        callBtn.classList.remove("calling");
+        callBtn.disabled = false;
+        callBtn.textContent = "🔔 Call Staff";
+      }, 3000);
+    } catch (err) {
+      console.error("❌ Call staff error:", err);
     }
+  });
+
+  function showStaffNotice(msg) {
+    notice.textContent = msg;
+    notice.style.bottom = "80px";
+    notice.style.opacity = "1";
+    setTimeout(() => {
+      notice.style.opacity = "0";
+      notice.style.bottom = "60px";
+    }, 2000);
   }
+}
+
 
   // ✅ Header "View History" button
   if (viewHeaderBtn) {
