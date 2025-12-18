@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Payment — TasteQR</title>
@@ -12,10 +13,14 @@
       background: #fff;
       padding: 20px;
       border-radius: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
       text-align: center;
     }
-    h2 { color: var(--brand); }
+
+    h2 {
+      color: var(--brand);
+    }
+
     #order-items {
       text-align: left;
       margin: 20px auto;
@@ -23,11 +28,13 @@
       border-bottom: 1px solid #ddd;
       padding: 10px 0;
     }
+
     .item {
       display: flex;
       justify-content: space-between;
       margin: 4px 0;
     }
+
     #back-home {
       margin-top: 20px;
       padding: 10px 20px;
@@ -38,12 +45,14 @@
       cursor: pointer;
       font-weight: 700;
     }
+
     #back-home:hover {
       opacity: 0.9;
       transform: translateY(-2px);
     }
   </style>
 </head>
+
 <body>
   <header id="banner">
     <div class="banner-left">
@@ -66,74 +75,71 @@
   </main>
 
   <script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const params = new URLSearchParams(window.location.search);
-  const orderId = params.get("orderId");
-  const tableNo = params.get("table");
-  //for null_spice
-  const NO_SPICE_CATEGORIES = ["drink", "dessert", "alcohol"];
-  const hideSpice = NO_SPICE_CATEGORIES.includes(item.category);
-
-  const details = [
-    item.size ? `Size: ${item.size}` : "",
-    !hideSpice && item.spice ? `Spice: ${item.spice}` : "",
-    addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : "",
-    item.juice ? `Juice: ${item.juice}` : ""
-    ].filter(Boolean);
+    document.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get("orderId");
+      const tableNo = params.get("table");
 
 
-  // Fill header info
-  document.getElementById("order-id").textContent = orderId || "-";
-  document.getElementById("table-no").textContent = tableNo || "-";
 
-  if (!orderId) return;
+      // Fill header info
+      document.getElementById("order-id").textContent = orderId || "-";
+      document.getElementById("table-no").textContent = tableNo || "-";
 
-  try {
-    const res = await fetch(`/api/order/view/${orderId}`);
-    const data = await res.json();
+      if (!orderId) return;
 
-    if (!res.ok || !data.order) {
-      console.error("Invalid order response");
-      return;
-    }
+      try {
+        const res = await fetch(`/api/order/view/${orderId}`);
+        const data = await res.json();
 
-    const container = document.getElementById("order-items");
-
-    container.innerHTML = data.items
-      .map((item) => {
-        // --- Parse addons safely (array OR JSON string) ---
-        let addons = [];
-        if (Array.isArray(item.addons)) {
-          addons = item.addons;
-        } else if (typeof item.addons === "string" && item.addons.trim() !== "") {
-          try {
-            addons = JSON.parse(item.addons);
-          } catch (e) {
-            console.warn("Bad addons JSON:", item.addons);
-          }
+        if (!res.ok || !data.order) {
+          console.error("Invalid order response");
+          return;
         }
 
-        // Build details list
-        const details = [
-          item.size ? `Size: ${item.size}` : "",
-          item.spice && item.spice !== "Normal"
-                                        ? `Spice: ${item.spice}`
-                                        : "",
+        const container = document.getElementById("order-items");
 
-          addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : "",
-          item.juice ? `Juice: ${item.juice}` : "" 
-        ].filter(Boolean); 
+        container.innerHTML = data.items
+          .map((item) => {
+            // --- Parse addons safely (array OR JSON string) ---
+            let addons = [];
+            if (Array.isArray(item.addons)) {
+              addons = item.addons;
+            } else if (typeof item.addons === "string" && item.addons.trim() !== "") {
+              try {
+                addons = JSON.parse(item.addons);
+              } catch (e) {
+                console.warn("Bad addons JSON:", item.addons);
+              }
+            }
 
-        const detailsHTML =
-          details.length > 0
-            ? `<small class="details">${details.join("<br>")}</small>`
-            : "";
+            // Build details list
+            // category-based spice hiding
+            const NO_SPICE_CATEGORIES = ["drink", "dessert", "alcohol"];
+            const hideSpice = NO_SPICE_CATEGORIES.includes(item.category);
 
-        const subtotal = Number(
-          item.subtotal != null ? item.subtotal : item.price * item.qty
-        );
+            // Build details list
+            const details = [
+              item.size ? `Size: ${item.size}` : "",
+              !hideSpice && item.spice && item.spice !== "Normal"
+                ? `Spice: ${item.spice}`
+                : "",
+              addons.length ? `Add-ons: ${addons.map(a => a.name).join(", ")}` : "",
+              item.juice ? `Juice: ${item.juice}` : ""
+            ].filter(Boolean);
 
-        return `
+
+
+            const detailsHTML =
+              details.length > 0
+                ? `<small class="details">${details.join("<br>")}</small>`
+                : "";
+
+            const subtotal = Number(
+              item.subtotal != null ? item.subtotal : item.price * item.qty
+            );
+
+            return `
           <div class="item">
             <span>
               ${item.name} × ${item.qty}<br>
@@ -142,23 +148,24 @@ document.addEventListener("DOMContentLoaded", async () => {
             <span>¥${subtotal.toFixed(2)}</span>
           </div>
         `;
-      })
-      .join("");
+          })
+          .join("");
 
-    // Update total
-    document.getElementById("order-total").textContent =
-      Number(data.order.total).toFixed(2);
-  } catch (err) {
-    console.error("❌ Payment page load error:", err);
-  }
+        // Update total
+        document.getElementById("order-total").textContent =
+          Number(data.order.total).toFixed(2);
+      } catch (err) {
+        console.error("❌ Payment page load error:", err);
+      }
 
-  // Back to menu
-  document.getElementById("back-home").addEventListener("click", () => {
-    window.location.href = tableNo
-      ? `main.html?table=${tableNo}`
-      : "main.html";
-  });
-});
-</script>
+      // Back to menu
+      document.getElementById("back-home").addEventListener("click", () => {
+        window.location.href = tableNo
+          ? `main.html?table=${tableNo}`
+          : "main.html";
+      });
+    });
+  </script>
 </body>
+
 </html>
