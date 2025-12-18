@@ -22,6 +22,13 @@ app.get("/health", (req, res) => {
 app.use("/api/order", orderRoutes);
 // ---- SERVE PUBLIC FRONTEND FILES ----
 const publicDir = path.join(__dirname, "public");
+app.get("/admin.html", requireAdmin, (req, res) => {
+  res.sendFile(path.join(publicDir, "admin.html"));
+});
+app.get("/sales.html", requireAdmin, (req, res) => {
+  res.sendFile(path.join(publicDir, "sales.html"));
+});
+
 app.use(express.static(publicDir));
 
 // ---- API ROUTES ----
@@ -50,7 +57,13 @@ app.post("/api/admin/login", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });*/
 // Serve HTML files only
-const htmlFiles = ["main.html", "admin.html", "sales.html", "tables.html", "history.html", "cart.html", "payment.html"];
+const htmlFiles = [
+  "main.html",
+  "tables.html",
+  "history.html",
+  "cart.html",
+  "payment.html"
+];
 
 app.get("/:page", (req, res, next) => {
   if (htmlFiles.includes(req.params.page)) {
