@@ -329,10 +329,12 @@ footer{
 .popup-back-btn {
   border: none;
   position: fixed;
-  background: linear-gradient(100deg,rgb(150, 150, 114),rgb(52, 103, 52));
+  background: none;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
+  border-color: black;
+  border-radius: 15px;
 }
 
 .popup-image-wrap {
