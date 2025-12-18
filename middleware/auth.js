@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 function generateAdminToken(username) {
   const payload = { role: "admin", username };
   const secret = process.env.JWT_SECRET || "devsecret";
-  return jwt.sign(payload, secret, { expiresIn: "12h" });
+  return jwt.sign(payload, secret, { expiresIn: "1h" });
 }
 
 function requireAdmin(req, res, next) {
