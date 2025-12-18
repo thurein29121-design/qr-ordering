@@ -6,7 +6,7 @@ require("dotenv").config();
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const tableRoutes = require("./routes/tableRoutes");
-const adminMenuRoutes = require("./routes/adminMenuRoutes");
+//const adminMenuRoutes = require("./routes/adminMenuRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const { testConnection } = require("./db/connection");
 const { generateAdminToken, requireAdmin } = require("./middleware/auth");
@@ -27,7 +27,7 @@ app.use(express.static(publicDir));
 // ---- API ROUTES ----
 app.use("/api/menu", menuRoutes);
 app.use("/api/tables", tableRoutes);
-app.use("/api/admin/menu", requireAdmin, adminMenuRoutes);
+//app.use("/api/admin/menu", requireAdmin, adminMenuRoutes);
 app.use("/api/analytics", requireAdmin, analyticsRoutes);
 
 // Admin login
