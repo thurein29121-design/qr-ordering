@@ -30,7 +30,7 @@ body {
   width: 100%;
   height: 120px;
 
-  background: linear-gradient(90deg, #70c093, #22d3ee); /* your gradient */
+  background: linear-gradient(90deg, #06b4d3, hsl(310, 90%, 20%)); /* your gradient */
   color: #fff;
 
   display: flex;
