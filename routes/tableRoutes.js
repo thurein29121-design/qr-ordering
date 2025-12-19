@@ -44,7 +44,7 @@ router.post("/close/:tableNo", async (req, res) => {
   const { tableNo } = req.params;
 
   try {
-    // Get latest NOT_PAID order for this table
+    // Get the latest unpaid order for this table
     const [[order]] = await db.query(
       `SELECT id FROM orders
        WHERE table_no = ? AND status = 'NOT_PAID'
@@ -53,10 +53,10 @@ router.post("/close/:tableNo", async (req, res) => {
     );
 
     if (!order) {
-      return res.json({ success: true, message: "No open order" });
+      return res.json({ success: true, message: "No unpaid order" });
     }
 
-    // Mark order as PAID
+    // Mark it PAID
     await db.query(
       "UPDATE orders SET status = 'PAID' WHERE id = ?",
       [order.id]
@@ -69,6 +69,7 @@ router.post("/close/:tableNo", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
 
 // ============================================================
 // UPDATE TABLE STATE (open / close)
