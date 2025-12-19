@@ -216,7 +216,7 @@ router.post("/new", async (req, res) => {
     const sessionId = t ? t.session_id : 1;
 
     const [orderRes] = await db.query(
-      "INSERT INTO orders (table_no, total, status, session_id, created_at) VALUES (?, ?, 'NOT_PAID', ?, NOW())",
+      "INSERT INTO orders (table_no, total, status, session_id, created_at) VALUES (?, ?, 'PAID', ?, NOW())",
       [tableNo, total, sessionId]
     );
 
