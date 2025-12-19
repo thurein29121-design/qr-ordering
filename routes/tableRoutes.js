@@ -80,6 +80,22 @@ router.post("/close/:tableNo", async (req, res) => {
 // ============================================================
 // UPDATE TABLE STATE (open / close)
 // ============================================================
+router.post("/open/:tableNo", async (req, res) => {
+  const { tableNo } = req.params;
+
+  try {
+    await db.query(
+      "UPDATE tables SET is_active = 1 WHERE table_no = ?",
+      [tableNo]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ OPEN TABLE ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 /*router.put("/:tableNo/state", async (req, res) => {
     const { tableNo } = req.params;
     const { state } = req.body;

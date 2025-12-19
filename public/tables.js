@@ -96,15 +96,14 @@ document.getElementById("cancel-btn").onclick = () => {
 openBtn.onclick = async () => {
   if (!currentTable) return;
 
-  await fetch(`/api/tables/${currentTable}/state`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ state: 1 })
+  await fetch(`/api/tables/open/${currentTable}`, {
+    method: "POST"
   });
 
   popup.classList.add("hidden");
   loadTables();
 };
+
 
 // 🔴 CLOSE & SHOW RECEIPT
 checkoutBtn.onclick = async () => {
