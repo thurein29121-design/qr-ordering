@@ -42,25 +42,29 @@ router.get("/:tableNo/status", async (req, res) => {
 // ============================================================
 router.post("/close/:tableNo", async (req, res) => {
   const { tableNo } = req.params;
+  console.log("🔴 CLOSE TABLE CALLED FOR:", tableNo);
 
   try {
-    // Get the latest unpaid order for this table
     const [[order]] = await db.query(
-      `SELECT id FROM orders
-       WHERE table_no = ? AND status = 'NOT_PAID'
+      `SELECT id, status FROM orders
+       WHERE table_no = ?
        ORDER BY id DESC LIMIT 1`,
       [tableNo]
     );
 
+    console.log("🔍 FOUND ORDER:", order);
+
     if (!order) {
-      return res.json({ success: true, message: "No unpaid order" });
+      console.log("⚠️ NO ORDER FOUND");
+      return res.json({ success: true, message: "No order" });
     }
 
-    // Mark it PAID
-    await db.query(
+    const [result] = await db.query(
       "UPDATE orders SET status = 'PAID' WHERE id = ?",
       [order.id]
     );
+
+    console.log("✅ UPDATE RESULT:", result);
 
     res.json({ success: true });
 
@@ -69,6 +73,7 @@ router.post("/close/:tableNo", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
 
 
 // ============================================================
