@@ -44,23 +44,27 @@ router.post("/close/:tableNo", async (req, res) => {
   const { tableNo } = req.params;
 
   try {
-    // 1️⃣ Find latest unpaid order
-    const [[order]] = await db.query(
-      `SELECT id FROM orders
-       WHERE table_no = ? AND status = 'NOT_PAID'
-       ORDER BY id DESC LIMIT 1`,
+    // 1️⃣ Get current session_id of table
+    const [[table]] = await db.query(
+      "SELECT session_id FROM tables WHERE table_no = ?",
       [tableNo]
     );
 
-    if (order) {
-      // 2️⃣ Mark order PAID
-      await db.query(
-        "UPDATE orders SET status = 'PAID' WHERE id = ?",
-        [order.id]
-      );
+    if (!table) {
+      return res.status(404).json({ success: false });
     }
 
-    // 3️⃣ Close table + increment session
+    const sessionId = table.session_id;
+
+    // 2️⃣ Mark ALL orders of this session as PAID
+    await db.query(
+      `UPDATE orders
+       SET status = 'PAID'
+       WHERE table_no = ? AND session_id = ? AND status = 'NOT_PAID'`,
+      [tableNo, sessionId]
+    );
+
+    // 3️⃣ Close table & increment session
     await db.query(
       "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
       [tableNo]
@@ -73,6 +77,7 @@ router.post("/close/:tableNo", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
 
 
 
