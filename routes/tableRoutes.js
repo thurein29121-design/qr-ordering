@@ -42,29 +42,29 @@ router.get("/:tableNo/status", async (req, res) => {
 // ============================================================
 router.post("/close/:tableNo", async (req, res) => {
   const { tableNo } = req.params;
-  console.log("🔴 CLOSE TABLE CALLED FOR:", tableNo);
 
   try {
+    // 1️⃣ Find latest unpaid order
     const [[order]] = await db.query(
-      `SELECT id, status FROM orders
-       WHERE table_no = ?
+      `SELECT id FROM orders
+       WHERE table_no = ? AND status = 'NOT_PAID'
        ORDER BY id DESC LIMIT 1`,
       [tableNo]
     );
 
-    console.log("🔍 FOUND ORDER:", order);
-
-    if (!order) {
-      console.log("⚠️ NO ORDER FOUND");
-      return res.json({ success: true, message: "No order" });
+    if (order) {
+      // 2️⃣ Mark order PAID
+      await db.query(
+        "UPDATE orders SET status = 'PAID' WHERE id = ?",
+        [order.id]
+      );
     }
 
-    const [result] = await db.query(
-      "UPDATE orders SET status = 'PAID' WHERE id = ?",
-      [order.id]
+    // 3️⃣ Close table + increment session
+    await db.query(
+      "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
+      [tableNo]
     );
-
-    console.log("✅ UPDATE RESULT:", result);
 
     res.json({ success: true });
 
@@ -76,10 +76,11 @@ router.post("/close/:tableNo", async (req, res) => {
 
 
 
+
 // ============================================================
 // UPDATE TABLE STATE (open / close)
 // ============================================================
-router.put("/:tableNo/state", async (req, res) => {
+/*router.put("/:tableNo/state", async (req, res) => {
     const { tableNo } = req.params;
     const { state } = req.body;
 
@@ -108,6 +109,6 @@ router.put("/:tableNo/state", async (req, res) => {
         console.error("❌ state ERROR:", err);
         res.status(500).json({ success: false });
     }
-});
+});*/
 
 module.exports = router;
