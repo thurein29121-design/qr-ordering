@@ -37,6 +37,38 @@ router.get("/:tableNo/status", async (req, res) => {
         res.status(500).json({ active: false });
     }
 });
+// ============================================================
+// CLOSE TABLE / RECEIPT → MARK ORDER AS PAID
+// ============================================================
+router.post("/close/:tableNo", async (req, res) => {
+  const { tableNo } = req.params;
+
+  try {
+    // Get latest NOT_PAID order for this table
+    const [[order]] = await db.query(
+      `SELECT id FROM orders
+       WHERE table_no = ? AND status = 'NOT_PAID'
+       ORDER BY id DESC LIMIT 1`,
+      [tableNo]
+    );
+
+    if (!order) {
+      return res.json({ success: true, message: "No open order" });
+    }
+
+    // Mark order as PAID
+    await db.query(
+      "UPDATE orders SET status = 'PAID' WHERE id = ?",
+      [order.id]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ CLOSE TABLE ERROR:", err);
+    res.status(500).json({ success: false });
+  }
+});
 
 // ============================================================
 // UPDATE TABLE STATE (open / close)
