@@ -117,11 +117,17 @@ checkoutBtn.onclick = async () => {
   const data = await res.json();
 
   // 2. Close table + increment session
-  await fetch(`/api/tables/${tableNo}/state`, {
+    await fetch(`/api/tables/close/${tableNo}`, {
+  method: "POST"
+});
+
+location.reload();
+/*await fetch(`/api/tables/${tableNo}/state`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ state: 0 })
-  });
+  });*/
+
 
   popup.classList.add("hidden");
   loadTables();
