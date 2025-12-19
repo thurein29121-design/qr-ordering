@@ -1,7 +1,6 @@
--- Ensure you're using the correct DB
+
 USE menu_data;
 
--- Fix or create orders table correctly
 DROP TABLE IF EXISTS orders;
 CREATE TABLE orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -11,7 +10,7 @@ CREATE TABLE orders (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Fix or create order_items table
+
 DROP TABLE IF EXISTS order_items;
 CREATE TABLE order_items (
   id INT AUTO_INCREMENT PRIMARY KEY,

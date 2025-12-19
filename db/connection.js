@@ -22,5 +22,5 @@ async function testConnection() {
   }
 }
 
-module.exports = db;               // <-- export pool directly
+module.exports = db;              
 module.exports.testConnection = testConnection;
