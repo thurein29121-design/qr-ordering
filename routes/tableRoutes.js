@@ -44,30 +44,30 @@ router.post("/close/:tableNo", async (req, res) => {
   const { tableNo } = req.params;
 
   try {
-    // 1️⃣ Find latest unpaid order
-    const [[order]] = await db.query(
-      `SELECT id FROM orders
-       WHERE table_no = ? AND status = 'NOT_PAID'
-       ORDER BY id DESC LIMIT 1`,
+    // 1) Read current session_id BEFORE incrementing it
+    const [[t]] = await db.query(
+      "SELECT session_id FROM tables WHERE table_no = ?",
       [tableNo]
     );
+    if (!t) return res.status(404).json({ success: false, error: "No table" });
 
-    if (order) {
-      // 2️⃣ Mark order PAID
-      await db.query(
-        "UPDATE orders SET status = 'PAID' WHERE id = ?",
-        [order.id]
-      );
-    }
+    const sessionId = t.session_id;
 
-    // 3️⃣ Close table + increment session
+    // 2) Mark ALL orders of this table+session as PAID
+    await db.query(
+      `UPDATE orders
+       SET status = 'PAID'
+       WHERE table_no = ? AND session_id = ? AND status = 'NOT_PAID'`,
+      [tableNo, sessionId]
+    );
+
+    // 3) Close table + increment session
     await db.query(
       "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
       [tableNo]
     );
 
     res.json({ success: true });
-
   } catch (err) {
     console.error("❌ CLOSE TABLE ERROR:", err);
     res.status(500).json({ success: false });
