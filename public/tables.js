@@ -111,23 +111,26 @@ checkoutBtn.onclick = async () => {
 
   const tableNo = currentTable;
 
-  // 1️⃣ Generate receipt
+  // 1) Generate receipt
   const res = await fetch(`/api/order/checkout/${tableNo}`, { method: "POST" });
   const data = await res.json();
 
-  // 2️⃣ Close table + mark orders PAID
+  // 2) Close table + mark PAID (backend)
   await fetch(`/api/tables/close/${tableNo}`, { method: "POST" });
 
+  // 3) Hide the table popup
   popup.classList.add("hidden");
 
-  // 3️⃣ Show receipt (DO NOT reload here)
+  // 4) Show receipt (DON'T reload here)
   if (data.success) {
     receiptText.textContent = formatReceipt(data);
-    receiptPopup.classList.remove("hidden");
   } else {
     receiptText.textContent = `No orders found for Table ${tableNo}.`;
-    receiptPopup.classList.remove("hidden");
   }
+  receiptPopup.classList.remove("hidden");
+
+  // ✅ IMPORTANT: refresh table grid NOW (so Sitting -> Blank updates)
+  await loadTables();
 };
 
 
