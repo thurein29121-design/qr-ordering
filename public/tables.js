@@ -111,27 +111,16 @@ checkoutBtn.onclick = async () => {
 
   const tableNo = currentTable;
 
-  // 1. Generate receipt (get all items under same session)
+  // 1️⃣ Generate receipt
   const res = await fetch(`/api/order/checkout/${tableNo}`, { method: "POST" });
   const data = await res.json();
 
-  // 2. Close table + increment session
-    await fetch(`/api/tables/close/${tableNo}`, {
-  method: "POST"
-});
-
-location.reload();
-/*await fetch(`/api/tables/${tableNo}/state`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ state: 0 })
-  });*/
-
+  // 2️⃣ Close table + mark orders PAID
+  await fetch(`/api/tables/close/${tableNo}`, { method: "POST" });
 
   popup.classList.add("hidden");
-  loadTables();
 
-  // 3. ALWAYS show receipt popup
+  // 3️⃣ Show receipt (DO NOT reload here)
   if (data.success) {
     receiptText.textContent = formatReceipt(data);
     receiptPopup.classList.remove("hidden");
@@ -140,6 +129,7 @@ location.reload();
     receiptPopup.classList.remove("hidden");
   }
 };
+
 
 // Format receipt contents
 function formatReceipt(data) {
@@ -183,6 +173,7 @@ function formatReceipt(data) {
 
   return out;
 }
+
 async function loadCheckData(tableNo) {
   try {
     const res = await fetch(`/api/order/table-items/${tableNo}`);

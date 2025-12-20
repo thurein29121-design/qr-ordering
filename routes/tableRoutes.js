@@ -96,35 +96,5 @@ router.post("/open/:tableNo", async (req, res) => {
   }
 });
 
-/*router.put("/:tableNo/state", async (req, res) => {
-    const { tableNo } = req.params;
-    const { state } = req.body;
-
-    const s = Number(state);
-
-    if (![0, 1].includes(s)) {
-        return res.status(400).json({ success: false });
-    }
-
-    try {
-        if (s === 0) {
-            await db.query(
-                "UPDATE tables SET is_active = 0, session_id = session_id + 1 WHERE table_no = ?",
-                [tableNo]
-            );
-        } else {
-            await db.query(
-                "UPDATE tables SET is_active = 1 WHERE table_no = ?",
-                [tableNo]
-            );
-        }
-
-        res.json({ success: true });
-
-    } catch (err) {
-        console.error("❌ state ERROR:", err);
-        res.status(500).json({ success: false });
-    }
-});*/
 
 module.exports = router;
