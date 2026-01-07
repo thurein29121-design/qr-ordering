@@ -169,7 +169,7 @@ async function loadOrders() {
 
     try {
         // FIXED ROUTE — correct admin order list API
-        const res = await fetch("/api/order/list", { headers: authHeaders() });
+        const res = await fetch("/api/order/list");
 
         if (res.status === 401) {
             showAdminLogin();
@@ -222,7 +222,7 @@ function attachViewButtons() {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
       try {
-        const res = await fetch(`/api/order/view/${id}`, { headers: authHeaders() });
+        const res = await fetch(`/api/order/view/${id}`);
         const data = await res.json();
         if (!data.order) return alert("Order not found");
 

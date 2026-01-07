@@ -31,7 +31,7 @@ app.get("/health", (req, res) => {
 app.use("/api/menu", menuRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/tables", tableRoutes);
-app.use("/api/analytics", requireAdmin, analyticsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 /* ======================
    ADMIN LOGIN (JWT ONLY)
