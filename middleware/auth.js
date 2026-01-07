@@ -11,9 +11,7 @@ function requireAdmin(req, res, next) {
     const auth = req.headers.authorization || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
 
-    if (!token) {
-      return res.status(401).json({ error: "Missing token" });
-    }
+    if (!token) return res.status(401).json({ error: "Missing token" });
 
     const secret = process.env.JWT_SECRET || "devsecret";
     const payload = jwt.verify(token, secret);
