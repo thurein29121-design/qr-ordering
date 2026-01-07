@@ -247,12 +247,6 @@ function attachViewButtons() {
   });
 }
 
-setInterval(() => {
-  // Only refresh if admin is logged in
-  if (localStorage.getItem("adminToken")) {
-    loadOrders();
-  }
-}, 3000);
 </script>
 </body>
 </html>
