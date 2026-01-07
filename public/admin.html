@@ -84,34 +84,6 @@
 
 <script>
 
-async function verifySalesPassword() {
-  const pass = document.getElementById("sales-pass").value.trim();
-  const err = document.getElementById("sales-auth-error");
-
-  if (!pass) {
-    err.textContent = "Password required.";
-    return;
-  }
-
-  const res = await fetch("/api/admin/sales-auth", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders()
-    },
-    body: JSON.stringify({ password: pass })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    err.textContent = data.error || "Access denied.";
-    return;
-  }
-
-  document.getElementById("sales-auth-popup").remove();
-  window.location.href = "sales.html";
-}
 
 /**********************************************
  * ALWAYS SHOW LOGIN POPUP FIRST
@@ -239,8 +211,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sales = document.getElementById("sales-btn");
     if (sales) sales.onclick = () => {
-  showSalesAuthPopup();
+  window.location.href = "sales.html";
 };
+
 
 });
 
@@ -277,34 +250,6 @@ function attachViewButtons() {
       }
     });
   });
-}
-function showSalesAuthPopup() {
-  if (document.getElementById("sales-auth-popup")) return;
-
-  const box = document.createElement("div");
-  box.id = "sales-auth-popup";
-  box.style = `
-    position:fixed; inset:0; background:rgba(0,0,0,0.6);
-    display:flex; justify-content:center; align-items:center; z-index:9999;
-  `;
-
-  box.innerHTML = `
-    <div style="background:white;padding:20px;border-radius:10px;width:300px;text-align:center;">
-      <h3>Sales Access</h3>
-      <input id="sales-pass" type="password"
-        placeholder="Enter password"
-        style="width:100%;padding:8px;margin-top:10px;">
-      <button id="sales-auth-btn"
-        style="margin-top:15px;padding:10px;background:#28a745;color:white;border:none;border-radius:6px;">
-        Continue
-      </button>
-      <p id="sales-auth-error" style="color:red;margin-top:10px;"></p>
-    </div>
-  `;
-
-  document.body.appendChild(box);
-
-  document.getElementById("sales-auth-btn").onclick = verifySalesPassword;
 }
 
 

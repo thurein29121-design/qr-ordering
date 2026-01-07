@@ -50,22 +50,6 @@ app.post("/api/admin/login", (req, res) => {
   res.json({ token });
 });
 
-/* ======================
-   SALES DASHBOARD RE-AUTH
-====================== */
-app.post("/api/admin/sales-auth", requireAdmin, (req, res) => {
-  const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ error: "Password required" });
-  }
-
-  if (password !== process.env.SALES_PASSWORD) {
-    return res.status(401).json({ error: "Wrong password" });
-  }
-
-  res.json({ ok: true });
-});
 
 /* ======================
    STATIC FRONTEND
